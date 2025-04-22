@@ -1,0 +1,63 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 229 27% 14%;
+    --foreground: 210 40% 98%;
+
+    --card: 229 27% 14%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 229 27% 14%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 252 80% 74%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 228 13% 24%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 228 13% 24%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 228 13% 24%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 228 13% 24%;
+    --input: 228 13% 24%;
+    --ring: 252 80% 74%;
+
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-inter;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+.glass {
+  @apply bg-secondary/30 backdrop-blur-lg border border-white/10;
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hidden {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
