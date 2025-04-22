@@ -5,6 +5,8 @@ from datetime import datetime
 import uuid
 import shutil
 import requests
+from dotenv import load_dotenv
+import os 
 
 app = FastAPI()
 
@@ -17,6 +19,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 #API_TOKEN
+load_dotenv()
+API_TOKEN= os.getenv("API_KEY")
 HEADERS = {"Authorization": f"Bearer {API_TOKEN}"}
 
 # URL de l'API Hugging Face pour le modèle GPT-2
@@ -26,6 +30,7 @@ MODEL_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-In
 conversations = [
     {"id": "1", "title": "Question sur le droit du travail", "date": "18 Avr. 2025"},
     {"id": "2", "title": "Conseil juridique", "date": "17 Avr. 2025"},
+    {"id": "3", "title": "Conseil juridique", "date": "17 Avr. 2025"},
 ]
 
 @app.get("/conversations")
