@@ -29,7 +29,7 @@
 - Vite ou Create React App
 - Shadcn/UI pour les composants
 - TailwindCSS pour le style
-- Axios pour les requêtes API
+- Axios 
 
 ---
 
