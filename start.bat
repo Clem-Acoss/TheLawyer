@@ -17,7 +17,7 @@ start /B cmd /C "cd droit-ai-interface && npm run dev >nul 2>&1"
 
 REM Vérifier que npm a démarré correctement
 echo Vérification que le serveur frontend est en cours d'exécution...
-timeout /t 10 /nobreak
+timeout /t 5 /nobreak
 
 REM Ouvrir automatiquement le navigateur à l'URL du front-end
 echo Ouverture du navigateur sur http://localhost:8080...
