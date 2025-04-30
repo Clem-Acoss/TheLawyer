@@ -6,8 +6,13 @@ import uuid
 import shutil
 import requests
 from dotenv import load_dotenv
+from db import crud
+from services.chat_service import generate_response
 import os 
-
+import httpx
+import certifi
+os.environ["PYTHONHTTPSVERIFY"] = "0"
+cert_path = r"C:\Users\ac75009559\AppData\Local\Programs\Python\Python313\Lib\site-packages\certifi\cacert.pem"
 app = FastAPI()
 
 # Autoriser le frontend React
@@ -22,7 +27,9 @@ app.add_middleware(
 load_dotenv()
 API_TOKEN= os.getenv("API_KEY")
 HEADERS = {"Authorization": f"Bearer {API_TOKEN}"}
-
+#Info pour supabase (Api key +url )
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 # URL de l'API Hugging Face pour le modèle GPT-2
 MODEL_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1"
 
@@ -42,33 +49,23 @@ async def chat(
     message: str = Form(...),
     files: List[UploadFile] = File(default=[]),
 ):
-    # Simuler le traitement IA (à remplacer par appel à Hugging Face)
-    print("Message reçu:", message)
+    generated_text = generate_response(message)
 
-    for file in files:
-        contents = await file.read()
-        print(f"Fichier reçu: {file.filename} ({len(contents)} octets)")
-        # Sauvegarde locale si nécessaire
-        # with open(f"uploads/{file.filename}", "wb") as f:
-        #     f.write(contents)
-
-    # Appel à l'API Hugging Face pour générer une réponse avec le modèle GPT-2
-    response = requests.post(
-        MODEL_URL, 
-        headers=HEADERS, 
-        json={"inputs": message},
-        verify = False
+    conversation = crud.create_conversation(
+        title="Conseil juridique",
+        date=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     )
-    print("Réponse brute du modèle :", response.text) 
-    # Récupérer la réponse du modèle
-    if response.status_code == 200:
-        response_data = response.json()
-        generated_text = response_data[0]['generated_text']
-    else:
-        generated_text = "Désolé, il y a eu une erreur lors de la génération de la réponse."
+    conversation_id = conversation["id"]
 
-    # Retourner la réponse générée
+    crud.create_message(
+        conversation_id=conversation_id,
+        message=message,
+        response_text=generated_text,
+        timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    )
+
     return {"response": generated_text}
+
 
 # Endpoint test simple
 @app.get("/")
