@@ -1,3 +1,5 @@
+//index.tsx
+
 import React, { useState, useEffect } from 'react';
 import { Send, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';

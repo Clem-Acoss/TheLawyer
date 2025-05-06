@@ -1,3 +1,5 @@
+// ChatMessage.tsx
+
 
 import React from 'react';
 import { MessageSquare, Bot } from 'lucide-react';
