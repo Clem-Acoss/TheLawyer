@@ -1,0 +1,63 @@
+PROJET-DROIT-IA-V2/
+├── backend/
+│   ├── __pycache__/
+│   ├── db/
+│   │   ├── __pycache__/
+│   │   ├── crud.py
+│   │   ├── supabase_client.py
+│   │   └── users.csv            <-- 🆕 Fichier CSV créé automatiquement ou manuellement
+│   ├── routes/
+│   │   ├── chat.py
+│   │   └── auth.py              <-- 🆕 Nouvelle route pour l'authentification
+│   ├── services/
+│   │   ├── __pycache__/
+│   │   └── chat_service.py
+│   ├── utils/
+│   ├── venv/
+│   ├── config.py
+│   ├── main.py
+│   └── requirements.txt
+├── droit-ai-interface/
+│   ├── node_modules/
+│   ├── public/
+│   │   ├── favicon.ico
+│   │   ├── placeholder.svg
+│   │   └── robots.txt
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── ui/
+│   │   │   │   ├── ChatMessage.tsx
+│   │   │   │   └── ConversationHistory.tsx
+│   │   │   └── FileUpload.tsx
+│   │   ├── hooks/
+│   │   │   ├── use-mobile.tsx
+│   │   │   └── use-toast.ts
+│   │   ├── lib/
+│   │   ├── pages/
+│   │   │   ├── Index.tsx
+│   │   │   ├── login.tsx
+│   │   │   ├── NotFound.tsx
+│   │   │   └── register.tsx
+│   ├── App.css
+│   ├── App.tsx
+│   ├── index.css
+│   ├── main.tsx
+│   ├── vite-env.d.ts
+│   ├── bun.lockb
+│   ├── components.json
+│   ├── eslint.config.js
+│   ├── index.html
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── postcss.config.js
+│   ├── tailwind.config.ts
+│   ├── tsconfig.app.json
+│   ├── tsconfig.json
+│   ├── tsconfig.node.json
+│   ├── vite.config.ts
+├── .env
+├── .gitignore
+├── README.md
+├── start.bat
+├── stop.bat
+└── Architecture.txt

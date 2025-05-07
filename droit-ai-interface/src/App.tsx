@@ -3,10 +3,12 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-import Register from "./pages/register"; // <-- AJOUTE ÇA
-import Login from "./pages/login"; // <-- AJOUTE ÇA
+import Register from "./pages/register";
+import Login from "./pages/login";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -16,9 +18,9 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Register />} />
-          <Route path="/login" element={<Login />} /> {/* <-- AJOUTE ÇA */}
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="/" element={<Index />} />        {/* Page d'accueil après connexion */}
+          <Route path="/register" element={<Register />} /> {/* Page d'inscription */}
+          <Route path="/login" element={<Login />} />       {/* Page de connexion */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

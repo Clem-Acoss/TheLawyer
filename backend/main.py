@@ -11,10 +11,12 @@ from services.chat_service import generate_response
 import os 
 import httpx
 import certifi
+from routes import chat, auth 
+
 os.environ["PYTHONHTTPSVERIFY"] = "0"
 cert_path = r"C:\Users\ac75009559\AppData\Local\Programs\Python\Python313\Lib\site-packages\certifi\cacert.pem"
 app = FastAPI()
-
+app.include_router(auth.router)
 # Autoriser le frontend React
 app.add_middleware(
     CORSMiddleware,
