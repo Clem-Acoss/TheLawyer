@@ -5,6 +5,7 @@ PROJET-DROIT-IA-V2/
 │   │   ├── __pycache__/
 │   │   ├── crud.py
 │   │   ├── supabase_client.py
+│   │   ├── conversations.csv
 │   │   └── users.csv            <-- 🆕 Fichier CSV créé automatiquement ou manuellement
 │   ├── routes/
 │   │   ├── chat.py

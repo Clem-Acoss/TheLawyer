@@ -1,5 +1,3 @@
-//index.tsx
-
 import React, { useState, useEffect } from 'react';
 import { Send, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,8 +7,10 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { ChatMessage } from '@/components/ChatMessage';
 import { FileUpload } from '@/components/FileUpload';
 import { ConversationHistory } from '@/components/ConversationHistory';
+import { useUser } from '@/hooks/useUser'; // <-- import du hook
 
 const Index = () => {
+  const { userId } = useUser(); // <-- récup du user connecté
   const [messages, setMessages] = useState<Array<{ text: string; isAi: boolean }>>([
     { text: "Bonjour, je suis votre assistant juridique. Comment puis-je vous aider aujourd'hui ?", isAi: true }
   ]);
@@ -21,17 +21,21 @@ const Index = () => {
 
   // Récupérer les conversations depuis le backend
   useEffect(() => {
+    if (!userId) return; // Si pas connecté, on fait rien
+    console.log('User ID:', userId);
     const fetchConversations = async () => {
       try {
-        const res = await fetch('http://localhost:8000/conversations');
+        const res = await fetch(`http://localhost:8000/conversations/${userId}`);
         const data = await res.json();
+        console.log(data);
         setConversations(data);
       } catch (error) {
         console.error("Erreur de chargement des conversations :", error);
       }
     };
+
     fetchConversations();
-  }, []);
+  }, [userId]); // <-- bien dépendre de userId
 
   const handleSend = async () => {
     if (!input.trim() && files.length === 0) return;
@@ -43,6 +47,7 @@ const Index = () => {
 
     const formData = new FormData();
     formData.append('message', input);
+    if (userId) formData.append('user_id', userId); // <-- envoi userId dans le formData
     files.forEach(file => formData.append('files', file));
 
     try {
@@ -94,6 +99,7 @@ const Index = () => {
           conversations={conversations}
           onSelect={() => {}}
         />
+        {conversations.length === 0 && <p>Aucune conversation disponible</p>}
       </aside>
 
       {/* Main chat area */}

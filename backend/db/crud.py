@@ -1,30 +1,57 @@
-from .supabase_client import supabase
-from datetime import datetime
+import csv
+import os
 
-def create_conversation(title: str, date: str):
-    response = supabase.table("conversations").insert({
-        "title": title,
-        "date": date
-    }).execute()
+# Chemin absolu vers ton CSV
+CSV_PATH = r'C:\Users\ac75009559\Desktop\AcossDev\FrontTest\projet droit ia v2\backend\db\conversations.csv'
 
-    if response.data:
-        return response.data[0]  # Prend le premier élément de la liste
-    else:
-        raise Exception("Erreur lors de la création de la conversation.")
+def get_conversations_by_user(user_id):
+    conversations = []
+    with open(CSV_PATH, 'r', encoding='utf-8') as csvfile:
+        reader = csv.reader(csvfile)
+        next(reader)  # skip header
+        for row in reader:
+            if len(row) < 5:
+                continue  # skip lignes incomplètes
+            if row[1] != str(user_id):
+                continue
+            conversations.append({
+                'id': row[0],
+                'title': row[2],
+                'date': row[4],
+            })
+    return conversations
 
-def get_conversations():
-    response = supabase.table("conversations").select("*").execute()
-    return response.data
 
-def create_message(conversation_id: int, message: str, response_text: str, timestamp: str):
-    response = supabase.table("messages").insert({
-        "conversation_id": conversation_id,
-        "message": message,
-        "response": response_text,
-        "timestamp": timestamp
-    }).execute()
+def add_conversation(user_id, title, message, date):
+    # Calculer nouvel id en lisant les ids existants
+    last_id = 0
+    with open(CSV_PATH, 'r', encoding='utf-8') as csvfile:
+        reader = csv.reader(csvfile)
+        next(reader)  # skip header
+        for row in reader:
+            if row and row[0].isdigit():
+                last_id = max(last_id, int(row[0]))
 
-    if response.data:
-        return response.data[0]
-    else:
-        raise Exception("Erreur lors de la création du message.")
+    new_id = last_id + 1
+
+    with open(CSV_PATH, 'a', newline='', encoding='utf-8') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow([new_id, user_id, title, message, date])
+
+
+def get_all_conversations():
+    conversations = []
+    with open(CSV_PATH, 'r', encoding='utf-8') as csvfile:
+        reader = csv.reader(csvfile)
+        next(reader)  # skip header
+        for row in reader:
+            if len(row) < 5:
+                continue
+            conversations.append({
+                'id': row[0],
+                'user_id': row[1],
+                'title': row[2],
+                'message': row[3],
+                'date': row[4],
+            })
+    return conversations

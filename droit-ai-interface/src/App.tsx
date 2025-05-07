@@ -18,8 +18,8 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />        {/* Page d'accueil après connexion */}
-          <Route path="/register" element={<Register />} /> {/* Page d'inscription */}
+          <Route path="/Index" element={<Index />} />        {/* Page d'accueil après connexion */}
+          <Route path="/" element={<Register />} /> {/* Page d'inscription */}
           <Route path="/login" element={<Login />} />       {/* Page de connexion */}
           <Route path="*" element={<NotFound />} />
         </Routes>

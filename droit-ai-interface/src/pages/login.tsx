@@ -4,12 +4,14 @@ import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Link, useNavigate } from 'react-router-dom';
+import { useUser } from '@/hooks/useUser';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { login } = useUser();  // <-- récupère login()
 
   const handleLogin = async () => {
     setIsLoading(true);
@@ -21,7 +23,9 @@ const Login = () => {
       });
 
       if (res.ok) {
-        navigate('/');
+        const data = await res.json();
+        login(data.user_id);  // <-- stocke dans localStorage
+        navigate('/Index');
       } else {
         alert('Erreur de connexion.');
       }
@@ -32,7 +36,6 @@ const Login = () => {
       setIsLoading(false);
     }
   };
-
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
       <div className="glass p-8 rounded-2xl shadow-lg w-full max-w-md">

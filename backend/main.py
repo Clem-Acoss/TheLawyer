@@ -2,63 +2,62 @@ from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List
 from datetime import datetime
-import uuid
-import shutil
-import requests
+import os
 from dotenv import load_dotenv
 from db import crud
 from services.chat_service import generate_response
-import os 
-import httpx
-import certifi
-from routes import chat, auth 
+from routes import chat, auth
 
-os.environ["PYTHONHTTPSVERIFY"] = "0"
-cert_path = r"C:\Users\ac75009559\AppData\Local\Programs\Python\Python313\Lib\site-packages\certifi\cacert.pem"
+# Initialisation de FastAPI
 app = FastAPI()
+
+# Inclure le router d'authentification
 app.include_router(auth.router)
+
 # Autoriser le frontend React
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # à restreindre en prod
+    allow_origins=["http://localhost:8080"],  # L'URL de ton frontend
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["*"],  # Toutes les méthodes HTTP (GET, POST, etc.)
+    allow_headers=["*"],  # Toutes les entêtes HTTP
 )
-#API_TOKEN
+
+# Charger les variables d'environnement
 load_dotenv()
-API_TOKEN= os.getenv("API_KEY")
+API_TOKEN = os.getenv("API_KEY")
 HEADERS = {"Authorization": f"Bearer {API_TOKEN}"}
-#Info pour supabase (Api key +url )
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+
 # URL de l'API Hugging Face pour le modèle GPT-2
 MODEL_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1"
 
-# Stockage fictif des conversations (à remplacer par une base réelle)
-conversations = [
-    {"id": "1", "title": "Question sur le droit du travail", "date": "18 Avr. 2025"},
-    {"id": "2", "title": "Conseil juridique", "date": "17 Avr. 2025"},
-    {"id": "3", "title": "Conseil juridique", "date": "17 Avr. 2025"},
-]
-
+# Endpoint pour récupérer toutes les conversations
 @app.get("/conversations")
 def get_conversations():
-    return conversations
+    return crud.get_conversations()  # Utiliser la méthode get_conversations du crud
 
+# Endpoint pour récupérer les conversations d'un utilisateur spécifique
+@app.get("/conversations/{user_id}")
+def get_conversations_for_user(user_id: str):
+    return crud.get_conversations_by_user(user_id)
+
+# Endpoint pour envoyer un message au chatbot et recevoir une réponse
 @app.post("/chat")
 async def chat(
     message: str = Form(...),
     files: List[UploadFile] = File(default=[]),
 ):
+    # Générer la réponse du chatbot
     generated_text = generate_response(message)
 
-    conversation = crud.create_conversation(
+    # Créer une nouvelle conversation et ajouter un message
+    conversation = crud.add_conversation(
         title="Conseil juridique",
         date=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     )
     conversation_id = conversation["id"]
 
+    # Ajouter les messages (utilisateur et réponse)
     crud.create_message(
         conversation_id=conversation_id,
         message=message,
@@ -67,7 +66,6 @@ async def chat(
     )
 
     return {"response": generated_text}
-
 
 # Endpoint test simple
 @app.get("/")
