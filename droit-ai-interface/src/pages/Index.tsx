@@ -12,6 +12,7 @@ import { ChatMessage } from '@/components/ChatMessage';
 import { FileUpload } from '@/components/FileUpload';
 import { ConversationHistory } from '@/components/ConversationHistory';
 import { useUser } from '@/hooks/useUser'; // <-- import du hook
+import {SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 
 const Index = () => {
   const { userId } = useUser(); // <-- récup du user connecté
@@ -154,28 +155,33 @@ const Index = () => {
       {/* Main chat area */}
       <main className="flex-1 flex flex-col">
         <header className="h-14 border-b border-border flex items-center px-4 glass">
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden">
-                <Menu className="h-5 w-5" />
+          
+<Sheet>
+  <SheetTrigger asChild>
+    <Button variant="ghost" size="icon" className="md:hidden">
+      <Menu className="h-5 w-5" />
+    </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-80 sm:w-96">
+            <SheetHeader>
+              <SheetTitle>Conversations</SheetTitle>
+              <SheetDescription>Gérez vos conversations existantes</SheetDescription>
+            </SheetHeader>
+            <div className="flex flex-col h-full mt-4">
+              <Button 
+                variant="outline" 
+                className="mb-4"
+                onClick={startNewConversation}
+              >
+                Nouvelle conversation
               </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-80 sm:w-96">
-              <div className="flex flex-col h-full">
-                <Button 
-                  variant="outline" 
-                  className="mb-4"
-                  onClick={startNewConversation}
-                >
-                  Nouvelle conversation
-                </Button>
-                <ConversationHistory 
-                  conversations={conversations}
-                  onSelect={() => {}}
-                />
-              </div>
-            </SheetContent>
-          </Sheet>
+              <ConversationHistory 
+                conversations={conversations}
+                onSelect={() => {}}
+              />
+            </div>
+          </SheetContent>
+        </Sheet>
           <h1 className="text-lg font-semibold ml-4">Assistant Juridique</h1>
         </header>
 
