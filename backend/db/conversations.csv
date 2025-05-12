@@ -3,9 +3,6 @@ id, user_id, title, message, date
 2,1, "Droit du travail", "Quel est le droit de congé?", "2025-05-07 10:30:00"
 3,2, "Conseil juridique", "Bonjour, j'ai une question.", "2025-05-07 10:00:00"
 4,2, "Droit du travail", "Quel est le droit de congé?", "2025-05-07 10:30:00"
-5,1,hey,"Bonjour, comment puis-je vous aider ?",2025-05-12 17:52:57
-6,1,Nouvelle conversation,"Bonjour, comment puis-je vous aider ?",2025-05-12 17:53:22
-7,1,Nouvelle conversation,"Bonjour, comment puis-je vous aider ?",2025-05-12 17:55:08
-8,1,Nouvelle conversation,"Bonjour, comment puis-je vous aider ?",2025-05-12 17:56:34
-9,1,hey,"Bonjour, comment puis-je vous aider ?",2025-05-12 17:58:37
-10,1,hello,"Bonjour, comment puis-je vous aider ?",2025-05-12 18:08:15
+
+5,1,capitale ,"Bonjour, comment puis-je vous aider ?",2025-05-12 18:18:53
+6,1,Nouvelle conversation,"Bonjour, comment puis-je vous aider ?",2025-05-12 18:28:13
