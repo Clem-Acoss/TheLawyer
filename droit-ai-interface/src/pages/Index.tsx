@@ -1,3 +1,7 @@
+// index.tsx 
+
+
+
 import React, { useState, useEffect } from 'react';
 import { Send, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -21,21 +25,25 @@ const Index = () => {
 
   // Récupérer les conversations depuis le backend
   useEffect(() => {
-    if (!userId) return; // Si pas connecté, on fait rien
-    console.log('User ID:', userId);
+    if (!userId) return; // Si l'utilisateur n'est pas connecté, on ne fait rien
     const fetchConversations = async () => {
       try {
         const res = await fetch(`http://localhost:8000/conversations/${userId}`);
+        if (!res.ok) {
+          throw new Error('Erreur de chargement des conversations');
+        }
         const data = await res.json();
         console.log(data);
         setConversations(data);
       } catch (error) {
         console.error("Erreur de chargement des conversations :", error);
+        setConversations([]); // Assure-toi que les conversations soient vides en cas d'erreur
       }
     };
-
+  
     fetchConversations();
-  }, [userId]); // <-- bien dépendre de userId
+  }, [userId]);
+  
 
   const handleSend = async () => {
     if (!input.trim() && files.length === 0) return;
@@ -77,12 +85,53 @@ const Index = () => {
     setFiles(prev => prev.filter(file => file.name !== name));
   };
 
-  const startNewConversation = () => {
-    setMessages([
-      { text: "Bonjour, je suis votre assistant juridique. Comment puis-je vous aider aujourd'hui ?", isAi: true }
-    ]);
-    setFiles([]);
+  const startNewConversation = async () => {
+    if (!userId) return;
+  
+    // Afficher un prompt pour saisir le titre de la conversation
+    const title = prompt("Entrez le titre de la conversation :") || "Nouvelle conversation"; // Titre par défaut si non saisi
+    const message = "Bonjour, comment puis-je vous aider ?"; // Message initial
+  
+    // Envoi de la requête POST pour créer la conversation
+    try {
+      const response = await fetch('http://localhost:8000/conversations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          title: title,
+          message: message,
+        }),
+      });
+  
+      if (response.ok) {
+        const data = await response.json();
+        console.log(data.message); // Afficher la réponse du backend (si succès)
+  
+        // Mettre à jour l'état pour démarrer une nouvelle conversation dans le frontend
+        setMessages([
+          { text: "Bonjour, je suis votre assistant juridique. Comment puis-je vous aider aujourd'hui ?", isAi: true }
+        ]);
+        setFiles([]); // Réinitialiser les fichiers
+  
+        // Recharger les conversations
+        const fetchConversations = async () => {
+          const res = await fetch(`http://localhost:8000/conversations/${userId}`);
+          const data = await res.json();
+          setConversations(data);  // Mettre à jour l'état des conversations
+        };
+  
+        fetchConversations();
+      } else {
+        console.error("Erreur lors de la création de la conversation");
+      }
+    } catch (error) {
+      console.error("Erreur de communication avec le backend :", error);
+    }
   };
+  
 
   return (
     <div className="flex h-screen bg-background">
@@ -142,7 +191,7 @@ const Index = () => {
             ))}
             {isLoading && (
               <ChatMessage 
-                message=""
+                message="..."
                 isAi={true}
                 isLoading={true}
               />

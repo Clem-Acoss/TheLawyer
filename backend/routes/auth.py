@@ -21,29 +21,37 @@ class UserLogin(BaseModel):
 CSV_FILE_PATH = os.path.join(os.path.dirname(__file__), '..', 'db', 'users.csv')
 
 @router.post("/register")
-async def register_user(user: UserRegister):
-    file_exists = os.path.isfile(CSV_FILE_PATH)
-    console.log(f"File exists: {file_exists}")
-    print(f"File exists: {file_exists}")
+async def register(user: dict):
+    # Assure que le fichier existe
+    if not os.path.exists(CSV_FILE_PATH):
+        with open(CSV_FILE_PATH, mode='w', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            writer.writerow(["user_id", "name", "email", "password"])  # Header
 
-    try:
-        with open(CSV_FILE_PATH, mode='a', newline='', encoding='utf-8') as file:
-            writer = csv.DictWriter(file, fieldnames=["name", "email", "password"])
+    # Récupère le dernier user_id
+    last_user_id = 0
+    with open(CSV_FILE_PATH, mode='r', newline='', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            try:
+                last_user_id = max(last_user_id, int(row["user_id"]))
+            except (ValueError, KeyError):
+                continue
 
-            if not file_exists:
-                writer.writeheader()
+    new_user_id = last_user_id + 1
 
-            writer.writerow({
-                
-                "name": user.name,
-                "email": user.email,
-                "password": user.password,  # ⚠️ à sécuriser plus tard
-            })
+    # Vérifie que l'email n'existe pas déjà
+    with open(CSV_FILE_PATH, mode='r', newline='', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        if any(row["email"] == user["email"] for row in reader):
+            raise HTTPException(status_code=400, detail="Email déjà utilisé.")
 
-        return {"message": "Utilisateur enregistré avec succès"}
+    # Ajoute le nouvel utilisateur
+    with open(CSV_FILE_PATH, mode='a', newline='', encoding='utf-8') as f:
+        writer = csv.writer(f)
+        writer.writerow([new_user_id, user["name"], user["email"], user["password"]])
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    return {"message": "Compte créé avec succès", "user_id": new_user_id}
 
 @router.post("/login")
 async def login_user(user: UserLogin):
@@ -54,9 +62,12 @@ async def login_user(user: UserLogin):
     try:
         with open(CSV_FILE_PATH, mode='r', encoding='utf-8') as file:
             reader = csv.DictReader(file)
-            for row in reader:
+            for idx, row in enumerate(reader):
                 if row["email"] == user.email and row["password"] == user.password:
-                    return {"message": "Connexion réussie"}
+                    return {
+                        "message": "Connexion réussie",
+                        "user_id": idx + 1  # retourne l'index comme user_id (⚠️ simplifié)
+                    }
             raise HTTPException(status_code=401, detail="Identifiants invalides")
 
     except FileNotFoundError:

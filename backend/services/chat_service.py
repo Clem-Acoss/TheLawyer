@@ -1,3 +1,6 @@
+# chat_service.py 
+
+
 import requests
 from datetime import datetime
 from db import crud
@@ -34,20 +37,12 @@ def generate_response(message: str) -> str:
 
 def save_conversation_and_message(message: str, generated_text: str) -> dict:
     """
-    Sauvegarder la conversation et le message dans Supabase.
+    Sauvegarder la conversation et le message dans le CSV.
     """
     # Créer une nouvelle conversation
-    conversation = crud.create_conversation(title="Conseil juridique", date=datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    conversation = crud.add_conversation(user_id=user_id, title="Conseil juridique", message=message, date=datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     
-    # ID de la conversation
-    conversation_id = conversation["id"]
+    # Sauvegarder le message et la réponse dans CSV
+    crud.add_message(conversation_id=conversation["id"], message=message, response=generated_text, timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     
-    # Sauvegarder le message et la réponse dans Supabase
-    crud.create_message(
-        conversation_id=conversation_id,
-        message=message,
-        response=generated_text,
-        timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    )
-    
-    return conversation
+    return conversation 

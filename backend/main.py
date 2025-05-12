@@ -13,7 +13,7 @@ app = FastAPI()
 
 # Inclure le router d'authentification
 app.include_router(auth.router)
-
+app.include_router(chat.router)
 # Autoriser le frontend React
 app.add_middleware(
     CORSMiddleware,
@@ -66,6 +66,7 @@ async def chat(
     )
 
     return {"response": generated_text}
+
 
 # Endpoint test simple
 @app.get("/")
