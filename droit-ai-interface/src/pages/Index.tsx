@@ -1,9 +1,17 @@
+
+
+
+//index.tsx
+
+
 import React, { useState, useEffect } from 'react';
 import { Send, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import {
+  Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription
+} from '@/components/ui/sheet';
 import { ChatMessage } from '@/components/ChatMessage';
 import { FileUpload } from '@/components/FileUpload';
 import { ConversationHistory } from '@/components/ConversationHistory';
@@ -11,17 +19,22 @@ import { useUser } from '@/hooks/useUser';
 
 const Index = () => {
   const { userId } = useUser();
+
   const [messages, setMessages] = useState<Array<{ text: string; isAi: boolean }>>([
     { text: "Bonjour, je suis votre assistant juridique. Comment puis-je vous aider aujourd'hui ?", isAi: true }
   ]);
   const [input, setInput] = useState('');
   const [files, setFiles] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [conversations, setConversations] = useState<Array<{ id: string, title: string, date: string }>>([]);
+
+  // conversations: titre + date
+  const [conversations, setConversations] = useState<Array<{ title: string; date: string }>>([]);
   const [selectedTitle, setSelectedTitle] = useState<string | undefined>(localStorage.getItem('convTitle') || undefined);
 
+  // Chargement des conversations à l'initialisation
   useEffect(() => {
     if (!userId) return;
+
     const fetchConversations = async () => {
       try {
         const res = await fetch(`http://localhost:8000/conversations/${userId}`);
@@ -33,59 +46,73 @@ const Index = () => {
         setConversations([]);
       }
     };
+
     fetchConversations();
   }, [userId]);
 
+  // Lorsqu'on sélectionne une conversation
   const handleSelectConversation = (title: string) => {
     localStorage.setItem('convTitle', title);
     setSelectedTitle(title);
     fetchMessagesForConversation(title);
   };
 
+  // Récupération des messages associés à un `title`
   const fetchMessagesForConversation = async (title: string) => {
     if (!userId) return;
     try {
-      const res = await fetch(`http://localhost:8000/messages/${userId}`);
+      const res = await fetch(`http://localhost:8000/messages/${userId}/${encodeURIComponent(title)}`);
       if (!res.ok) throw new Error('Erreur lors du chargement des messages');
+  
       const allMessages = await res.json();
-      const filteredMessages = allMessages
-        .filter((msg: { title: string }) => msg.title === title)
-        .map((msg: { text: string; isAi: boolean }) => ({
-          text: msg.text,
-          isAi: msg.isAi,
-        }));
-      setMessages(filteredMessages);
+      const formattedMessages = allMessages.map((msg: { message: string; user_id: number; title: string; date: string }) => ({
+        text: msg.message,
+        isAi: false // ou true si tu veux détecter les réponses IA plus tard
+      }));
+      setMessages(formattedMessages);
     } catch (error) {
       console.error('Erreur lors du chargement des messages pour la conversation :', error);
       setMessages([]);
     }
   };
-
+  // Envoi d'un message
   const handleSend = async () => {
     if (!input.trim() && files.length === 0) return;
+  
     const newMessage = { text: input, isAi: false };
     setMessages(prev => [...prev, newMessage]);
-    setInput('');
+    setInput(''); 
     setIsLoading(true);
-
+   
     const formData = new FormData();
     formData.append('message', input);
     if (userId) formData.append('user_id', userId);
     files.forEach(file => formData.append('files', file));
-
+  
+    // Récupérer la date actuelle
+    const currentDate = new Date().toISOString();
+   
     try {
-      const response = await fetch('http://localhost:8000/chat', {
+      const response = await fetch('http://localhost:8000/send-message', {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: parseInt(userId),
+          title: selectedTitle,
+          message: input,
+          date: currentDate, // Ajouter la date actuelle à la requête
+        }),
       });
+  
       const data = await response.json();
-      setMessages(prev => [...prev, { text: data.response, isAi: true }]);
+      setMessages(prev => [...prev, { text: data.message, isAi: true }]);
     } catch (error) {
-      console.error('Erreur lors de l\'envoi au backend :', error);
+      console.error("Erreur lors de l'envoi au backend :", error);
     } finally {
       setIsLoading(false);
     }
   };
+  
 
   const handleFileSelect = (newFiles: File[]) => {
     setFiles(prev => [...prev, ...newFiles]);
@@ -94,7 +121,29 @@ const Index = () => {
   const handleRemoveFile = (name: string) => {
     setFiles(prev => prev.filter(file => file.name !== name));
   };
-
+  const handleDeleteConversation = async (title: string) => {
+    if (!confirm(`Supprimer la conversation "${title}" ?`)) return;
+    try {
+      const res = await fetch(`http://localhost:8000/conversations/${encodeURIComponent(title)}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) throw new Error("Erreur lors de la suppression");
+  
+      setConversations(prev => prev.filter(conv => conv.title !== title));
+  
+      // si la conversation supprimée est celle affichée
+      if (selectedTitle === title) {
+        localStorage.removeItem('convTitle');
+        setSelectedTitle(undefined);
+        setMessages([
+          { text: "Bonjour, je suis votre assistant juridique. Comment puis-je vous aider aujourd'hui ?", isAi: true }
+        ]);
+      }
+    } catch (error) {
+      console.error("Erreur lors de la suppression :", error);
+    }
+  };
+  // Création d'une nouvelle conversation
   const startNewConversation = async () => {
     if (!userId) return;
     const title = prompt("Entrez le titre de la conversation :") || "Nouvelle conversation";
@@ -116,12 +165,9 @@ const Index = () => {
         setSelectedTitle(title);
         localStorage.setItem('convTitle', title);
 
-        const fetchConversations = async () => {
-          const res = await fetch(`http://localhost:8000/conversations/${userId}`);
-          const data = await res.json();
-          setConversations(data);
-        };
-        fetchConversations();
+        const res = await fetch(`http://localhost:8000/conversations/${userId}`);
+        const newData = await res.json();
+        setConversations(newData);
       } else {
         console.error("Erreur lors de la création de la conversation");
       }
@@ -137,9 +183,10 @@ const Index = () => {
         <Button variant="outline" className="mb-4 w-full" onClick={startNewConversation}>
           Nouvelle conversation
         </Button>
-        <ConversationHistory 
+        <ConversationHistory
           conversations={conversations} 
           onSelect={handleSelectConversation}
+          onDelete={handleDeleteConversation}
           selectedTitle={selectedTitle}
         />
         {conversations.length === 0 && <p>Aucune conversation disponible</p>}
@@ -163,9 +210,10 @@ const Index = () => {
                 <Button variant="outline" className="mb-4" onClick={startNewConversation}>
                   Nouvelle conversation
                 </Button>
-                <ConversationHistory 
-                  conversations={conversations} 
+                <ConversationHistory
+                  conversations={conversations}
                   onSelect={handleSelectConversation}
+                  onDelete={handleDeleteConversation}
                   selectedTitle={selectedTitle}
                 />
               </div>
