@@ -69,33 +69,40 @@ const Index = () => {
   const handleSend = async () => {
     if (!input.trim() && files.length === 0) return;
 
+    // Affiche immédiatement le message utilisateur
     const newMessage = { text: input, isAi: false };
     setMessages(prev => [...prev, newMessage]);
     setInput('');
     setIsLoading(true);
-
-    const currentDate = new Date().toISOString();
 
     try {
       const response = await fetch('http://localhost:8000/send-message', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          user_id: parseInt(userId),
+          user_id: parseInt(userId, 10),
           title: selectedTitle,
           message: input,
-          date: currentDate,
         }),
       });
 
+      // On récupère le JSON
       const data = await response.json();
-      setMessages(prev => [...prev, { text: data.message, isAi: true }]);
+
+      if (response.ok) {
+        // Affiche la réponse IA
+        setMessages(prev => [...prev, { text: data.answer, isAi: true }]);
+      } else {
+        console.error("Erreur send-message :", response.status, data);
+        // Tu peux aussi afficher une notification d'erreur à l'utilisateur ici
+      }
     } catch (error) {
       console.error("Erreur lors de l'envoi au backend :", error);
     } finally {
       setIsLoading(false);
     }
   };
+
 
   const handleFileSelect = (newFiles: File[]) => {
     setFiles(prev => [...prev, ...newFiles]);

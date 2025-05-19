@@ -6,6 +6,7 @@ from datetime import datetime
 from db import crud
 from dotenv import load_dotenv
 import os 
+from services.faiss_service import ask_question_pipeline
 
 load_dotenv()
 API_TOKEN= os.getenv("API_KEY")
@@ -17,23 +18,18 @@ SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 MODEL_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1"
 HEADERS = {"Authorization": f"Bearer {API_TOKEN}"}  # Tu peux passer l'API_TOKEN en paramètre si nécessaire
 
-def generate_response(message: str) -> str:
-    """
-    Appel à l'API Hugging Face pour générer une réponse basée sur le message.
-    """
-    # Appel à l'API Hugging Face pour générer une réponse avec le modèle GPT-2
-    response = requests.post(
-        MODEL_URL,
-        headers=HEADERS,
-        json={"inputs": message},
-        verify=False
-    )
+from services.faiss_service import ask_question_pipeline
 
-    if response.status_code == 200:
-        response_data = response.json()
-        return response_data[0]['generated_text']
-    else:
-        return "Désolé, il y a eu une erreur lors de la génération de la réponse."
+def generate_response_and_save(user_id: int, title: str, message: str) -> str:
+    """
+    Appelle ask_question_pipeline(user_id, title, question) qui :
+      - recherche via FAISS
+      - génère la réponse avec Ollama
+      - enregistre question + réponse dans le CSV
+    Retourne uniquement la réponse texte.
+    """
+    result = ask_question_pipeline(user_id, title, message)
+    return result["answer"]
 
 def save_conversation_and_message(user_id: int, message: str, generated_text: str) -> dict:
     """
