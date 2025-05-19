@@ -49,11 +49,11 @@ async def get_conversations(user_id: int):
     return conversations
 
 @router.get("/messages/{user_id}/{conversation_title}")
-async def get_messages_for_conversation(conversation_title: str):
+async def get_messages_for_conversation(user_id: int, conversation_title: str):
     """
     Récupère les messages d'une conversation spécifique.
     """
-    messages = crud.get_messages_by_conversation_title(conversation_title)
+    messages = crud.get_messages_by_conversation_title(user_id, conversation_title)
     if not messages:
         raise HTTPException(status_code=404, detail="Aucun message trouvé pour cette conversation")
     return messages

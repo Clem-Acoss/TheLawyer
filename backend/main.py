@@ -1,3 +1,7 @@
+#main.py
+
+
+
 from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List
@@ -37,9 +41,8 @@ def get_conversations():
     return crud.get_conversations()  # Utiliser la méthode get_conversations du crud
 
 # Endpoint pour récupérer les conversations d'un utilisateur spécifique
-@app.get("/conversations/{user_id}")
-def get_conversations_for_user(user_id: str):
-    return crud.get_conversations_by_user(user_id)
+
+
 
 # Endpoint pour envoyer un message au chatbot et recevoir une réponse
 @app.post("/chat")

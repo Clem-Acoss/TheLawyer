@@ -7,7 +7,7 @@ import csv
 import os
 from collections import defaultdict
 # Chemin absolu vers ton CSV
-CSV_PATH = r'C:\Users\ac75009559\Desktop\AcossDev\FrontTest\projet droit ia v2\backend\db\conversations.csv'
+CSV_PATH = r'/Users/clementgardair/Desktop/AcossDev/TheLawyer/backend/db/conversations.csv'
 
 def get_conversations_by_user_title(user_id: int, conversation_title: str):
     """
@@ -129,12 +129,15 @@ def add_message(user_id: int, title: str, message: str, timestamp: str):
         writer = csv.writer(csvfile)
         writer.writerow([new_id, user_id, title, message, timestamp])
         
-def get_messages_by_conversation_title(conversation_title: str):
+def get_messages_by_conversation_title(user_id: int, conversation_title: str):
     messages = []
     with open("db/conversations.csv", newline='', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
-            if str(row["title"]).strip() == conversation_title.strip():
+            if (
+                str(row["title"]).strip() == conversation_title.strip() and
+                int(row["user_id"]) == user_id
+            ):
                 messages.append({
                     "user_id": int(row["user_id"]),
                     "title": row["title"],

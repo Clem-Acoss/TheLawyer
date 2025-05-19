@@ -35,7 +35,7 @@ def generate_response(message: str) -> str:
     else:
         return "Désolé, il y a eu une erreur lors de la génération de la réponse."
 
-def save_conversation_and_message(message: str, generated_text: str) -> dict:
+def save_conversation_and_message(user_id: int, message: str, generated_text: str) -> dict:
     """
     Sauvegarder la conversation et le message dans le CSV.
     """
