@@ -1,11 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Menu, FilePlus } from 'lucide-react';
+import { Send, Menu, FilePlus, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
 } from '@/components/ui/sheet';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/components/ui/dropdown-menu';
 import { ChatMessage } from '@/components/ChatMessage';
 import { FileUpload } from '@/components/FileUpload';
 import { ConversationHistory } from '@/components/ConversationHistory';
@@ -16,13 +27,18 @@ const Index = () => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [messages, setMessages] = useState<Array<{ text: string; isAi: boolean }>>([
-    { text: "Bonjour, je suis votre assistant juridique. Comment puis-je vous aider aujourd'hui ?", isAi: true }
+    { text: "Bonjour, je suis votre assistant juridique. Comment puis-je vous aider aujourd'hui ?", isAi: true },
   ]);
   const [input, setInput] = useState('');
   const [files, setFiles] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [conversations, setConversations] = useState<Array<{ title: string; date: string }>>([]);
-  const [selectedTitle, setSelectedTitle] = useState<string | undefined>(localStorage.getItem('convTitle') || undefined);
+  const [selectedTitle, setSelectedTitle] = useState<string | undefined>(
+    localStorage.getItem('convTitle') || undefined
+  );
+
+  // **NOUVEAU** : état du mode d'envoi ('rag' ou 'llm')
+  const [mode, setMode] = useState<'rag' | 'llm'>('rag');
 
   useEffect(() => {
     if (!userId) return;
@@ -51,13 +67,15 @@ const Index = () => {
   const fetchMessagesForConversation = async (title: string) => {
     if (!userId) return;
     try {
-      const res = await fetch(`http://localhost:8000/messages/${userId}/${encodeURIComponent(title)}`);
+      const res = await fetch(
+        `http://localhost:8000/messages/${userId}/${encodeURIComponent(title)}`
+      );
       if (!res.ok) throw new Error('Erreur lors du chargement des messages');
 
       const allMessages = await res.json();
       const formattedMessages = allMessages.map((msg: { message: string }) => ({
         text: msg.message,
-        isAi: false
+        isAi: false,
       }));
       setMessages(formattedMessages);
     } catch (error) {
@@ -70,13 +88,14 @@ const Index = () => {
     if (!input.trim() && files.length === 0) return;
 
     // Affiche immédiatement le message utilisateur
-    const newMessage = { text: input, isAi: false };
-    setMessages(prev => [...prev, newMessage]);
+    setMessages((prev) => [...prev, { text: input, isAi: false }]);
     setInput('');
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8000/send-message', {
+      // Sélection de l'endpoint selon le mode
+      const endpoint = mode === 'rag' ? 'send-message' : 'send-message-llm';
+      const response = await fetch(`http://localhost:8000/${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -86,15 +105,13 @@ const Index = () => {
         }),
       });
 
-      // On récupère le JSON
       const data = await response.json();
 
       if (response.ok) {
         // Affiche la réponse IA
-        setMessages(prev => [...prev, { text: data.answer, isAi: true }]);
+        setMessages((prev) => [...prev, { text: data.answer, isAi: true }]);
       } else {
-        console.error("Erreur send-message :", response.status, data);
-        // Tu peux aussi afficher une notification d'erreur à l'utilisateur ici
+        console.error('Erreur send-message :', response.status, data);
       }
     } catch (error) {
       console.error("Erreur lors de l'envoi au backend :", error);
@@ -103,30 +120,30 @@ const Index = () => {
     }
   };
 
-
   const handleFileSelect = (newFiles: File[]) => {
-    setFiles(prev => [...prev, ...newFiles]);
+    setFiles((prev) => [...prev, ...newFiles]);
   };
 
   const handleRemoveFile = (name: string) => {
-    setFiles(prev => prev.filter(file => file.name !== name));
+    setFiles((prev) => prev.filter((file) => file.name !== name));
   };
 
   const handleDeleteConversation = async (title: string) => {
     if (!confirm(`Supprimer la conversation "${title}" ?`)) return;
     try {
-      const res = await fetch(`http://localhost:8000/conversations/${encodeURIComponent(title)}`, {
-        method: 'DELETE',
-      });
+      const res = await fetch(
+        `http://localhost:8000/conversations/${encodeURIComponent(title)}`,
+        { method: 'DELETE' }
+      );
       if (!res.ok) throw new Error("Erreur lors de la suppression");
 
-      setConversations(prev => prev.filter(conv => conv.title !== title));
+      setConversations((prev) => prev.filter((conv) => conv.title !== title));
 
       if (selectedTitle === title) {
         localStorage.removeItem('convTitle');
         setSelectedTitle(undefined);
         setMessages([
-          { text: "Bonjour, je suis votre assistant juridique. Comment puis-je vous aider aujourd'hui ?", isAi: true }
+          { text: "Bonjour, je suis votre assistant juridique. Comment puis-je vous aider aujourd'hui ?", isAi: true },
         ]);
       }
     } catch (error) {
@@ -140,23 +157,25 @@ const Index = () => {
     const message = "Bonjour, comment puis-je vous aider ?";
 
     try {
-      const response = await fetch('http://localhost:8000/conversations', {
+      const res = await fetch('http://localhost:8000/conversations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id: userId, title, message }),
       });
 
-      if (response.ok) {
-        const data = await response.json();
+      if (res.ok) {
+        const data = await res.json();
         console.log(data.message);
 
-        setMessages([{ text: "Bonjour, je suis votre assistant juridique. Comment puis-je vous aider aujourd'hui ?", isAi: true }]);
+        setMessages([
+          { text: "Bonjour, je suis votre assistant juridique. Comment puis-je vous aider aujourd'hui ?", isAi: true },
+        ]);
         setFiles([]);
         setSelectedTitle(title);
         localStorage.setItem('convTitle', title);
 
-        const res = await fetch(`http://localhost:8000/conversations/${userId}`);
-        const newData = await res.json();
+        const convRes = await fetch(`http://localhost:8000/conversations/${userId}`);
+        const newData = await convRes.json();
         setConversations(newData);
       } else {
         console.error("Erreur lors de la création de la conversation");
@@ -233,19 +252,26 @@ const Index = () => {
               onKeyDown={(e) => e.key === 'Enter' && handleSend()}
               className="flex-1"
             />
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".pdf"
-              multiple
-              className="hidden"
-              onChange={(e) => {
-                if (e.target.files) {
-                  handleFileSelect(Array.from(e.target.files));
-                  e.target.value = '';
-                }
-              }}
-            />
+
+            {/* DropdownMenu pour choisir le mode */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="shrink-0 flex items-center gap-1">
+                  <Send className="h-4 w-4" />
+                  {mode === 'rag' ? 'Envoyer (RAG)' : 'Envoyer (LLM)'}
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setMode('rag')}>
+                  Envoyer avec RAG
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setMode('llm')}>
+                  Envoyer avec LLM
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             <Button
               variant="outline"
               onClick={() => fileInputRef.current?.click()}
@@ -253,10 +279,6 @@ const Index = () => {
             >
               <FilePlus className="h-4 w-4 mr-1" />
               Ajouter PDF
-            </Button>
-            <Button onClick={handleSend} className="shrink-0">
-              <Send className="h-4 w-4 mr-2" />
-              Envoyer
             </Button>
           </div>
         </div>

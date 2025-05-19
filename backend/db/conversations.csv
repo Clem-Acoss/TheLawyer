@@ -11,7 +11,10 @@ id,user_id,title,message,date
 12,1,capitale v2,hey,2025-05-19 14:06:21.813000+00:00
 13,6,capitale,"Bonjour, comment puis-je vous aider ?",2025-05-19 16:31:11
 14,6,capitale,hey ,2025-05-19 14:31:18.255000+00:00
-15,6,capitale v2 ,"Bonjour, comment puis-je vous aider ?",2025-05-19 16:31:29
-16,6,capitale v2 ,hey ,2025-05-19 14:43:07.832000+00:00
-17,6,capitale v2 ,Quelle est la capitale de la france ,2025-05-19 18:06:00
-18,6,capitale v2 ,La réponse est : Paris.,2025-05-19 18:06:00
+15,6,llm test ,"Bonjour, comment puis-je vous aider ?",2025-05-19 18:57:16
+16,6,llm test ,En un mot qu'es tu ?,2025-05-19 18:58:09
+17,6,llm test ,Un robot !,2025-05-19 18:58:09
+18,6,llm test ,En un mot qui es tu ?,2025-05-19 18:58:51
+19,6,llm test ,Amable,2025-05-19 18:58:51
+20,6,llm test ,Quel es ton nom ? ,2025-05-19 18:59:32
+21,6,llm test ,"Je suis un modèle d'intelligence artificielle connu sous le nom de Llama. Llama est l'abréviation de ""Large Language Model Meta AI"".",2025-05-19 18:59:32

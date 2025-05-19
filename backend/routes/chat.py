@@ -2,7 +2,11 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from datetime import datetime
 from db import crud
-from services.chat_service import generate_response_and_save
+from services.chat_service import (
+    generate_response_and_save,       # RAG
+    generate_llm_response_and_save,  # LLM seul
+)
+
 
 router = APIRouter()
 
@@ -58,3 +62,16 @@ async def send_message(req: MessageRequest):
         traceback.print_exc()
         # renvoie aussi le message d’erreur dans le body
         raise HTTPException(status_code=500, detail=f"Erreur interne : {e}")
+
+
+@router.post("/send-message-llm")
+async def send_message_llm(req: MessageRequest):
+    """
+    Route qui génère une réponse via LLM seul (pas de RAG).
+    """
+    try:
+        answer = generate_llm_response_and_save(req.user_id, req.title, req.message)
+        return {"answer": answer}
+    except Exception as e:
+        import traceback; traceback.print_exc()
+        raise HTTPException(500, detail=str(e))
