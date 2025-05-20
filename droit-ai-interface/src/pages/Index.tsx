@@ -280,6 +280,18 @@ const Index = () => {
               <FilePlus className="h-4 w-4 mr-1" />
               Ajouter PDF
             </Button>
+            <input
+             type="file"
+             ref={fileInputRef}
+             accept="application/pdf"
+             multiple
+             style={{ display: 'none' }}
+             onChange={(e) => {
+               if (e.target.files) {
+                 handleFileSelect(Array.from(e.target.files));
+               }
+             }}
+            />
           </div>
         </div>
       </main>

@@ -11,10 +11,38 @@ id,user_id,title,message,date
 12,1,capitale v2,hey,2025-05-19 14:06:21.813000+00:00
 13,6,capitale,"Bonjour, comment puis-je vous aider ?",2025-05-19 16:31:11
 14,6,capitale,hey ,2025-05-19 14:31:18.255000+00:00
-15,6,llm test ,"Bonjour, comment puis-je vous aider ?",2025-05-19 18:57:16
-16,6,llm test ,En un mot qu'es tu ?,2025-05-19 18:58:09
-17,6,llm test ,Un robot !,2025-05-19 18:58:09
-18,6,llm test ,En un mot qui es tu ?,2025-05-19 18:58:51
-19,6,llm test ,Amable,2025-05-19 18:58:51
-20,6,llm test ,Quel es ton nom ? ,2025-05-19 18:59:32
-21,6,llm test ,"Je suis un modèle d'intelligence artificielle connu sous le nom de Llama. Llama est l'abréviation de ""Large Language Model Meta AI"".",2025-05-19 18:59:32
+15,6,conv juridique ,"Bonjour, comment puis-je vous aider ?",2025-05-20 10:38:27
+16,6,conv juridique ,hello tu t'y connais en droit ?,2025-05-20 10:38:53
+17,6,conv juridique ,"Bonjour ! Oui, je suis entraîné sur un large éventail de sujets, dont le droit. Cependant, je ne suis pas un avocat ou un spécialiste du droit et mes connaissances sont basées sur mes données d'entraînement.
+
+Je peux vous aider à comprendre des concepts généraux, fournir des informations sur les lois et réglementations, ainsi que vous guider dans la recherche de ressources juridiques. Cependant, pour les questions spécifiques ou les affaires personnelles, il est toujours préférable de consulter un professionnel du droit qualifié.
+
+Qu'est-ce que vous souhaitez savoir en matière de droit ?",2025-05-20 10:38:53
+18,6,conv juridique ,pourrrais tu me citer un article de droit ?,2025-05-20 10:41:06
+19,6,conv juridique ,"Bien sûr ! Voici quelques exemples d'articles de droit que vous pourriez trouver utiles :
+
+1. **Article 9 du Code civil français** : ""Les biens, quels qu'ils soient, sont acquis par leur propriétaire au moment où il les possède."" (Exemple de concept fondamental de propriété)
+
+2. **Article 121 du Code civil français** : ""Les contrats peuvent être régis par des clauses dérogatoires, à l'exception des contrats de mariage et des donations de fiefs."" (Exemple de règles concernant les contrats)
+
+3. **L'article 1er du Code de la propriété intellectuelle** : ""Le présent Code établit une régime spécifique pour la propriété intellectuelle, ainsi que les règles relatives à son exercice et à sa mise en œuvre."" (Exemple d'article relatif à la propriété intellectuelle)
+
+4. **L'article 14 de la Convention européenne des droits de l'homme** : ""Toute personne a droit au respect de sa vie privée, de ses correspondances et de ses domiciles."" (Exemple d'article concernant les droits de l'homme)
+
+5. **Article 3 de la Convention sur les éléments du patrimoine culturel immatériel** : ""Les États se concercent à assurer le bien-être des cultures et des expressions de la diversité humaine, en reconnaissant leur valeur culturelle et intellectuelle."" (Exemple d'article relatif au patrimoine culturel)
+
+Veuillez noter que ces articles peuvent varier en fonction du pays ou de la région. Si vous avez besoin d'un article précis, veuillez me fournir plus d'informations sur le sujet pour que je puisse vous aider à trouver l'article approprié.
+
+Et si vous souhaitez discuter de spécifiques d'articles de droit, je serais ravi de vous aider !",2025-05-20 10:41:06
+20,6,conv juridique ,Donne moi un article du code civil,2025-05-20 10:42:41
+21,6,conv juridique ,"Je peux vous donner un exemple de l'article 8 du code civil français, qui concerne la responsabilité civile.
+
+**Article 8 du Code Civil**
+
+"" L'absence d'unfait grave et imposant pour le dommage causé par une personne à autrui est une excuse. Les fautes qui ne sont point graves et importantes n'excusent pas l'autre partie de ne pas remplir ses obligations contractuelles.""
+
+Ce article précise que la responsabilité civile peut être excused si les circonstances sont telles que l'on ne peut prétendre avoir commis une faute grave et importante. Cependant, en cas d'absence d'une faute grave, les obligations contractuelles doivent toujours être remplies.
+
+C'est un exemple de règle générale qui peut varier en fonction du contexte et des circonstances spécifiques.",2025-05-20 10:42:41
+22,6,conv juridique ,hey ,2025-05-20 10:47:02
+23,6,conv juridique ,How can I assist you today?,2025-05-20 10:47:02
