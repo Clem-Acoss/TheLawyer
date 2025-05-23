@@ -61,4 +61,6 @@ PROJET-DROIT-IA-V2/
 ├── README.md
 ├── start.bat
 ├── stop.bat
+├──snapshotenv.txt
+├──snapshot_env.sh
 └── Architecture.txt
