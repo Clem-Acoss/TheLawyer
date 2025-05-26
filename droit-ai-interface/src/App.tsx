@@ -1,3 +1,5 @@
+// App.tsx
+import { UserProvider } from "@/context/UserContext";  // Import du contexte utilisateur
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -16,14 +18,16 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/Index" element={<Index />} />        {/* Page d'accueil après connexion */}
-          <Route path="/" element={<Register />} /> {/* Page d'inscription */}
-          <Route path="/login" element={<Login />} />       {/* Page de connexion */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <UserProvider> {/* Enveloppe toute l’app avec UserProvider */}
+        <BrowserRouter>
+          <Routes>
+            <Route path="/Index" element={<Index />} />        {/* Page d'accueil après connexion */}
+            <Route path="/" element={<Register />} />          {/* Page d'inscription */}
+            <Route path="/login" element={<Login />} />        {/* Page de connexion */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </UserProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

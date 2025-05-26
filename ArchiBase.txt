@@ -1,0 +1,27 @@
+\c baseTheLawyer
+CREATE DATABASE
+You are now connected to database "baseTheLawyer" as user "clementgardair".
+baseTheLawyer=# CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    email TEXT UNIQUE NOT NULL,
+    hashed_password TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE
+baseTheLawyer=# CREATE TABLE conversations (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    title TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE
+baseTheLawyer=# CREATE TABLE messages (
+    id SERIAL PRIMARY KEY,
+    conversation_id INTEGER REFERENCES conversations(id) ON DELETE CASCADE,
+    sender TEXT CHECK (sender IN ('user', 'assistant')) NOT NULL,
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+ALTER TABLE messages
+ADD COLUMN is_ai BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE

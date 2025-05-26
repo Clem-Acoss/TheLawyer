@@ -1,66 +1,67 @@
 PROJET-DROIT-IA-V2/
+│
+├── .env                            # Variables d'environnement (clé secrète, URL DB, etc.)
+├── .gitignore
+├── README.md
+├── Architecture.txt                # Document expliquant l'architecture du projet
+├── start.bat                       # Script de démarrage (Windows)
+├── stop.bat                        # Script d'arrêt (Windows)
+├── snapshotenv.txt
+├── snapshot_env.sh
+│
 ├── backend/
-│   ├── __pycache__/
-│   ├── db/
-│   │   ├── __pycache__/
+│   ├── app
+│   │   ├── auth/     
+│   │   │   ├── routes.py
+│   │   │   ├── utils.py
+│   │   │ 
+│   │   ├── chat/     
+│   │   │   ├── routes.py
+│   │   │   ├── service.py
+│   │   │ 
+│   │   ├── config.py
 │   │   ├── crud.py
-│   │   ├── supabase_client.py
-│   │   ├── conversations.csv
-│   │   └── users.csv            <-- 🆕 Fichier CSV créé automatiquement ou manuellement
-│   ├── routes/
-│   │   ├── chat.py
-│   │   └── auth.py              <-- 🆕 Nouvelle route pour l'authentification
-│   ├── services/
-│   │   ├── __pycache__/
-│   │   └── chat_service.py
-│   ├── utils/
-│   ├── venv/
-│   ├── config.py
-│   ├── main.py
-│   └── requirements.txt
-├── droit-ai-interface/
-│   ├── node_modules/
+│   │   ├── database.py
+│   │   ├── main.py 
+│   │   ├── models.py
+│   │   ├── schemas.py 
+│   
+├── droit-ai-interface/            # Frontend React + Tailwind
+│   ├── package.json
+│   ├── tailwind.config.ts
+│   ├── tsconfig.json
+│   ├── vite.config.ts
 │   ├── public/
 │   │   ├── favicon.ico
 │   │   ├── placeholder.svg
 │   │   └── robots.txt
 │   ├── src/
+│   │   ├── App.tsx
+│   │   ├── main.tsx
+│   │   ├── index.css
 │   │   ├── components/
+│   │   │   ├── FileUpload.tsx
 │   │   │   ├── ui/
 │   │   │   │   ├── ChatMessage.tsx
 │   │   │   │   └── ConversationHistory.tsx
-│   │   │   └── FileUpload.tsx
 │   │   ├── hooks/
 │   │   │   ├── use-mobile.tsx
 │   │   │   └── use-toast.ts
-│   │   ├── lib/
+│   │   ├── lib/  
+│   │   │   ├──  api.ts                # Bibliothèques utilitaires ou API clients
+│   │   │   ├── utils.ts
 │   │   ├── pages/
-│   │   │   ├── Index.tsx
+│   │   │   ├── Index.tsx          # Page principale (chat)
 │   │   │   ├── login.tsx
-│   │   │   ├── NotFound.tsx
-│   │   │   └── register.tsx
-│   ├── App.css
-│   ├── App.tsx
-│   ├── index.css
-│   ├── main.tsx
+│   │   │   ├── register.tsx
+│   │   │   └── NotFound.tsx
+│
 │   ├── vite-env.d.ts
-│   ├── bun.lockb
-│   ├── components.json
-│   ├── eslint.config.js
-│   ├── index.html
-│   ├── package-lock.json
-│   ├── package.json
-│   ├── postcss.config.js
-│   ├── tailwind.config.ts
 │   ├── tsconfig.app.json
-│   ├── tsconfig.json
 │   ├── tsconfig.node.json
-│   ├── vite.config.ts
-├── .env
-├── .gitignore
-├── README.md
-├── start.bat
-├── stop.bat
-├──snapshotenv.txt
-├──snapshot_env.sh
-└── Architecture.txt
+│   ├── bun.lockb
+│   ├── eslint.config.js
+│   ├── components.json
+│   ├── App.css
+│
+│   └── node_modules/
