@@ -1,12 +1,12 @@
 // ChatMessage.tsx
 
 
-import React from 'react';
+import React, { ReactNode } from 'react';
 import { MessageSquare, Bot } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ChatMessageProps {
-  message: string;
+  message: ReactNode;
   isAi: boolean;
   isLoading?: boolean;
 }

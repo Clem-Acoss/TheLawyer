@@ -22,6 +22,7 @@ import { FileUpload } from "@/components/FileUpload";
 import { ConversationHistory } from "@/components/ConversationHistory";
 import { useUser } from "@/context/UserContext";
 import { apiFetch } from "@/lib/api";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type Conversation = {
   id: number;
@@ -36,11 +37,10 @@ type Message = {
   timestamp: string;
 };
 
-// ... importations inchangées ...
-
 const Index = () => {
-  const { logout } = useUser(); // ✅ modif : suppression de userId
+  const { logout } = useUser();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   const [messages, setMessages] = useState<Array<{ text: string; isAi: boolean }>>([
     { text: "Bonjour, je suis votre assistant juridique. Comment puis-je vous aider aujourd'hui ?", isAi: true },
@@ -55,9 +55,14 @@ const Index = () => {
   );
   const [mode, setMode] = useState<"rag" | "llm">("rag");
 
+  // Scroll automatique en bas quand messages ou isLoading changent
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isLoading]);
+
   // Charger les conversations
   useEffect(() => {
-    apiFetch<Conversation[]>(`/chat/conversations`) // ✅ modif : suppression du userId
+    apiFetch<Conversation[]>(`/chat/conversations`)
       .then((data) => setConversations(data))
       .catch((e) => {
         console.error(e);
@@ -94,44 +99,49 @@ const Index = () => {
   };
 
   const handleSend = async () => {
-  if (!input.trim() && files.length === 0) return;
-  if (selectedConvId === null) {
-    alert("Veuillez sélectionner une conversation ou en créer une nouvelle.");
-    return;
-  }
+    if (!input.trim() && files.length === 0) return;
+    if (selectedConvId === null) {
+      alert("Veuillez sélectionner une conversation ou en créer une nouvelle.");
+      return;
+    }
 
-  setInput("");
-  setIsLoading(true);
+    const userMessage = input.trim();
+    setInput("");
+    setIsLoading(true);
 
-  try {
-    const endpoint = mode === "rag" ? "send-message" : "send-message-llm";
-    await apiFetch(
-      `/chat/${endpoint}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          conversation_id: selectedConvId,
-          sender: "user",
-          content: input,
-          is_ai: false,
-        }),
-      }
-    );
+    // Ajouter immédiatement le message user (optionnel)
+    setMessages((prev) => [...prev, { text: userMessage, isAi: false }]);
 
-    // Recharger tous les messages depuis la base
-    const all = await apiFetch<Message[]>(`/chat/messages/${selectedConvId}`);
-    setMessages(all.map((m) => ({ text: m.content, isAi: m.sender !== "user" })));
+    try {
+      const endpoint = mode === "rag" ? "send-message" : "send-message-llm";
+
+      // Envoi du message user à l'API
+      await apiFetch(
+        `/chat/${endpoint}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            conversation_id: selectedConvId,
+            sender: "user",
+            content: userMessage,
+            is_ai: false,
+          }),
+        }
+      );
+
+      // Recharger tous les messages depuis la base
+      const all = await apiFetch<Message[]>(`/chat/messages/${selectedConvId}`);
+      setMessages(all.map((m) => ({ text: m.content, isAi: m.sender !== "user" })));
 
     } catch (e) {
       console.error(e);
     } finally {
-    setIsLoading(false);
+      setIsLoading(false);
     }
   };
-
 
   const startNewConversation = async () => {
     const title = prompt("Entrez le titre de la conversation :") || "Nouvelle conversation";
@@ -225,7 +235,13 @@ const Index = () => {
             {messages.map((msg, i) => (
               <ChatMessage key={i} message={msg.text} isAi={msg.isAi} />
             ))}
-            {isLoading && <ChatMessage message="..." isAi />}
+            {isLoading && (
+              <ChatMessage
+                message={<Skeleton className="h-6 w-20 rounded-md bg-muted animate-pulse" />}
+                isAi={true}
+              />
+            )}
+            <div ref={messagesEndRef} />
           </div>
         </ScrollArea>
 
@@ -242,6 +258,7 @@ const Index = () => {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSend()}
               className="flex-1"
+              disabled={isLoading}
             />
 
             <DropdownMenu>
@@ -253,28 +270,14 @@ const Index = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setMode("rag")}>
-                  Envoyer avec RAG
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setMode("llm")}>
-                  Envoyer avec LLM
-                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setMode("rag")}>RAG (Recherche documentaire)</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setMode("llm")}>LLM simple</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <Button variant="outline" onClick={() => fileInputRef.current?.click()} className="shrink-0">
-              <FilePlus className="h-5 w-5" />
+            <Button onClick={handleSend} disabled={isLoading || (!input.trim() && files.length === 0)}>
+              <Send className="h-4 w-4" />
             </Button>
-            <input
-              type="file"
-              multiple
-              ref={fileInputRef}
-              className="hidden"
-              onChange={(e) => {
-                if (!e.target.files) return;
-                setFiles(Array.from(e.target.files));
-              }}
-            />
           </div>
         </div>
       </main>
