@@ -34,3 +34,4 @@ class Message(Base):
     is_ai = Column(Boolean, default=False, nullable=False)
 
     conversation = relationship("Conversation", back_populates="messages")
+

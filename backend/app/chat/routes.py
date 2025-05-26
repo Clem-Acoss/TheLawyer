@@ -31,10 +31,9 @@ def get_convs(
 def post_msg(
     msg: schemas.MessageCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)  # ✅ utile pour sécuriser si besoin
+    current_user: models.User = Depends(get_current_user)
 ):
-    # Optionnel : vérifier que le user a le droit d'envoyer un message dans cette conversation
-    return service.add_message(db, msg.conversation_id, msg.sender, msg.content)
+    return service.add_message(db, msg.conversation_id, msg.sender, msg.content, msg.is_ai)
 
 @router.get("/messages/{conversation_id}", response_model=List[schemas.MessageOut])
 def get_msgs(

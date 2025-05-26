@@ -17,8 +17,13 @@ def create_conversation(db: Session, user_id: int, title: str):
 def get_conversations(db: Session, user_id: int):
     return db.query(models.Conversation).filter(models.Conversation.user_id == user_id).all()
 
-def add_message(db: Session, conversation_id: int, sender: str, content: str):
-    msg = models.Message(conversation_id=conversation_id, sender=sender, content=content)
+def add_message(db: Session, conversation_id: int, sender: str, content: str, is_ai: bool = False):
+    msg = models.Message(
+        conversation_id=conversation_id,
+        sender=sender,
+        content=content,
+        is_ai=is_ai
+    )
     db.add(msg)
     db.commit()
     db.refresh(msg)

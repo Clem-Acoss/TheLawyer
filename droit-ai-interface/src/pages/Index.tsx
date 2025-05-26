@@ -94,30 +94,44 @@ const Index = () => {
   };
 
   const handleSend = async () => {
-    if (!input.trim() && files.length === 0) return;
-    setMessages((prev) => [...prev, { text: input, isAi: false }]);
-    setInput("");
-    setIsLoading(true);
+  if (!input.trim() && files.length === 0) return;
+  if (selectedConvId === null) {
+    alert("Veuillez sélectionner une conversation ou en créer une nouvelle.");
+    return;
+  }
 
-    try {
-      const endpoint = mode === "rag" ? "send-message" : "send-message-llm";
-      const data = await apiFetch<{ answer: string }>(
-        `/chat/${endpoint}`,
-        {
-          method: "POST",
-          body: JSON.stringify({
-            conversation_id: selectedConvId,
-            content: input,
-          }),
-        }
-      );
-      setMessages((prev) => [...prev, { text: data.answer, isAi: true }]);
+  setInput("");
+  setIsLoading(true);
+
+  try {
+    const endpoint = mode === "rag" ? "send-message" : "send-message-llm";
+    await apiFetch(
+      `/chat/${endpoint}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          conversation_id: selectedConvId,
+          sender: "user",
+          content: input,
+          is_ai: false,
+        }),
+      }
+    );
+
+    // Recharger tous les messages depuis la base
+    const all = await apiFetch<Message[]>(`/chat/messages/${selectedConvId}`);
+    setMessages(all.map((m) => ({ text: m.content, isAi: m.sender !== "user" })));
+
     } catch (e) {
       console.error(e);
     } finally {
-      setIsLoading(false);
+    setIsLoading(false);
     }
   };
+
 
   const startNewConversation = async () => {
     const title = prompt("Entrez le titre de la conversation :") || "Nouvelle conversation";

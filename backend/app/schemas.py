@@ -47,3 +47,8 @@ class MessageOut(BaseModel):
 
     class Config:
         orm_mode = True
+        
+class MessageRequest(BaseModel):
+    conversation_id: int
+    sender: str
+    content: str
