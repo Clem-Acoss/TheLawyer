@@ -7,15 +7,9 @@ from app import models, schemas, crud
 from app.auth.utils import hash_password, verify_password, create_access_token
 from app.database import SessionLocal
 from fastapi.security import OAuth2PasswordRequestForm
-
+from app.auth.deps import get_db
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 @router.post("/signup", response_model=schemas.UserOut)
 def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):

@@ -6,29 +6,41 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import SessionLocal
 from app.chat import service
-from app import schemas
+from app import schemas, models
+from app.auth.deps import get_db, get_current_user  # ✅ import des dépendances
+from typing import List
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
 @router.post("/conversation", response_model=schemas.ConversationOut)
-def create_conv(conv: schemas.ConversationCreate, user_id: int, db: Session = Depends(get_db)):
-    return service.create_conversation(db, user_id=user_id, title=conv.title)
+def create_conv(
+    conv: schemas.ConversationCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)  # ✅ récupération depuis le token
+):
+    return service.create_conversation(db, user_id=current_user.id, title=conv.title)
 
-@router.get("/conversations/{user_id}", response_model=list[schemas.ConversationOut])
-def get_convs(user_id: int, db: Session = Depends(get_db)):
-    return service.get_conversations(db, user_id=user_id)
+@router.get("/conversations", response_model=List[schemas.ConversationOut])
+def get_convs(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)  # ✅ on ne passe plus le user_id dans l'URL
+):
+    return service.get_conversations(db, user_id=current_user.id)
 
 @router.post("/message", response_model=schemas.MessageOut)
-def post_msg(msg: schemas.MessageCreate, db: Session = Depends(get_db)):
+def post_msg(
+    msg: schemas.MessageCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)  # ✅ utile pour sécuriser si besoin
+):
+    # Optionnel : vérifier que le user a le droit d'envoyer un message dans cette conversation
     return service.add_message(db, msg.conversation_id, msg.sender, msg.content)
 
-@router.get("/messages/{conversation_id}", response_model=list[schemas.MessageOut])
-def get_msgs(conversation_id: int, db: Session = Depends(get_db)):
+@router.get("/messages/{conversation_id}", response_model=List[schemas.MessageOut])
+def get_msgs(
+    conversation_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)  # ✅ protection des messages
+):
+    # Optionnel : vérifier que current_user est bien propriétaire de la conversation
     return service.get_messages(db, conversation_id)

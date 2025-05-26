@@ -40,3 +40,6 @@ export async function apiFetch<T>(
 
   return responseBody;
 }
+export async function getConversations() {
+  return await apiFetch("/chat/conversations");
+}

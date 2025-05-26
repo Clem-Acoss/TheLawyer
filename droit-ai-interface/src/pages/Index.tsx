@@ -36,8 +36,10 @@ type Message = {
   timestamp: string;
 };
 
+// ... importations inchangées ...
+
 const Index = () => {
-  const { userId, logout } = useUser();
+  const { logout } = useUser(); // ✅ modif : suppression de userId
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [messages, setMessages] = useState<Array<{ text: string; isAi: boolean }>>([
@@ -55,22 +57,19 @@ const Index = () => {
 
   // Charger les conversations
   useEffect(() => {
-    if (!userId) return;
-    apiFetch<Conversation[]>(`/chat/conversations/${userId}`)
+    apiFetch<Conversation[]>(`/chat/conversations`) // ✅ modif : suppression du userId
       .then((data) => setConversations(data))
       .catch((e) => {
         console.error(e);
         setConversations([]);
       });
-  }, [userId]);
+  }, []);
 
-  // Construire la liste au format attendu par ConversationHistory
   const convForHistory = conversations.map((c) => ({
     title: c.title,
     date: new Date(c.created_at).toLocaleDateString("fr-FR"),
   }));
 
-  // Sélectionner une conversation via le title
   const handleSelectConversation = (title: string) => {
     const conv = conversations.find((c) => c.title === title);
     if (conv) {
@@ -81,12 +80,11 @@ const Index = () => {
     }
   };
 
-  // Récupérer les messages
   const fetchMessages = (convId: number) => {
     apiFetch<Message[]>(`/chat/messages/${convId}`)
       .then((all) =>
         setMessages(
-          all.map((m) => ({ text: m.content, isAi: m.sender !== userId }))
+          all.map((m) => ({ text: m.content, isAi: m.sender !== "user" }))
         )
       )
       .catch((e) => {
@@ -95,7 +93,6 @@ const Index = () => {
       });
   };
 
-  // Envoyer un message
   const handleSend = async () => {
     if (!input.trim() && files.length === 0) return;
     setMessages((prev) => [...prev, { text: input, isAi: false }]);
@@ -110,7 +107,6 @@ const Index = () => {
           method: "POST",
           body: JSON.stringify({
             conversation_id: selectedConvId,
-            sender: userId,
             content: input,
           }),
         }
@@ -123,28 +119,24 @@ const Index = () => {
     }
   };
 
-  // Créer une nouvelle conversation
   const startNewConversation = async () => {
-    if (!userId) return;
     const title = prompt("Entrez le titre de la conversation :") || "Nouvelle conversation";
     try {
       const conv = await apiFetch<Conversation>(
         "/chat/conversation",
         {
           method: "POST",
-          body: JSON.stringify({ user_id: userId, title }),
+          body: JSON.stringify({ title }),
         }
       );
       handleSelectConversation(conv.title);
-      // Recharger la liste
-      const allConvs = await apiFetch<Conversation[]>(`/chat/conversations/${userId}`);
+      const allConvs = await apiFetch<Conversation[]>(`/chat/conversations`);
       setConversations(allConvs);
     } catch (e) {
       console.error(e);
     }
   };
 
-  // Supprimer une conversation via le title
   const handleDeleteConversation = async (title: string) => {
     const conv = conversations.find((c) => c.title === title);
     if (!conv) return;
@@ -154,7 +146,6 @@ const Index = () => {
     try {
       await apiFetch(`/chat/conversations/${conv.id}`, {
         method: "DELETE",
-        body: JSON.stringify({ user_id: userId }),
       });
       setConversations((prev) => prev.filter((c) => c.id !== conv.id));
 
@@ -171,17 +162,8 @@ const Index = () => {
     }
   };
 
-  if (!userId) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <p>Utilisateur non authentifié. <Button onClick={() => logout()}>Se déconnecter</Button></p>
-      </div>
-    );
-  }
-
   return (
     <div className="flex h-screen bg-background">
-      {/* Sidebar */}
       <aside className="hidden md:flex w-80 border-r border-border flex-col p-4">
         <Button variant="outline" className="mb-4 w-full" onClick={startNewConversation}>
           Nouvelle conversation
@@ -195,7 +177,6 @@ const Index = () => {
         {conversations.length === 0 && <p>Aucune conversation disponible</p>}
       </aside>
 
-      {/* Main */}
       <main className="flex-1 flex flex-col">
         <header className="h-14 border-b border-border flex items-center px-4 glass">
           <Sheet>
