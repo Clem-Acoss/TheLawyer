@@ -36,12 +36,14 @@ class MessageCreate(BaseModel):
     conversation_id: int
     sender: str
     content: str
+    is_ai: bool = False  # facultatif, par défaut False
 
 class MessageOut(BaseModel):
     id: int
     sender: str
     content: str
-    timestamp: datetime
+    created_at: datetime
+    is_ai: bool
 
     class Config:
         orm_mode = True

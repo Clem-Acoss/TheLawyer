@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Text
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.database import Base
+from sqlalchemy import Boolean, func
 
 class User(Base):
     __tablename__ = "users"
@@ -24,10 +25,12 @@ class Conversation(Base):
 
 class Message(Base):
     __tablename__ = "messages"
+    
     id = Column(Integer, primary_key=True, index=True)
     conversation_id = Column(Integer, ForeignKey("conversations.id"))
-    sender = Column(String)
-    content = Column(Text)
-    timestamp = Column(DateTime, default=datetime.utcnow)
+    sender = Column(String, nullable=False)
+    content = Column(String, nullable=False)
+    created_at = Column(DateTime(timezone=False), server_default=func.now())
+    is_ai = Column(Boolean, default=False, nullable=False)
 
     conversation = relationship("Conversation", back_populates="messages")

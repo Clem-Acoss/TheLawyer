@@ -27,7 +27,7 @@ def get_convs(
 ):
     return service.get_conversations(db, user_id=current_user.id)
 
-@router.post("/message", response_model=schemas.MessageOut)
+@router.post("/send-message", response_model=schemas.MessageOut)
 def post_msg(
     msg: schemas.MessageCreate,
     db: Session = Depends(get_db),
@@ -44,3 +44,21 @@ def get_msgs(
 ):
     # Optionnel : vérifier que current_user est bien propriétaire de la conversation
     return service.get_messages(db, conversation_id)
+
+@router.delete("/conversations/{conversation_id}")
+def delete_conversation(
+    conversation_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    conv = db.query(models.Conversation).filter(
+        models.Conversation.id == conversation_id,
+        models.Conversation.user_id == current_user.id
+    ).first()
+
+    if not conv:
+        raise HTTPException(status_code=404, detail="Conversation non trouvée")
+
+    db.delete(conv)
+    db.commit()
+    return {"detail": "Conversation supprimée avec succès"}
