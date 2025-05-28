@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Send, Menu, FilePlus, ChevronDown } from "lucide-react";
+import { Send, Menu, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -34,16 +34,20 @@ type Message = {
   id: number;
   sender: string;
   content: string;
-  timestamp: string;
+  created_at: string; // correction: timestamp renommé en created_at pour cohérence avec backend
 };
 
 const Index = () => {
   const { logout } = useUser();
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  const [messages, setMessages] = useState<Array<{ text: string; isAi: boolean }>>([
-    { text: "Bonjour, je suis votre assistant juridique. Comment puis-je vous aider aujourd'hui ?", isAi: true },
+  const [messages, setMessages] = useState<
+    Array<{ text: string; isAi: boolean }>
+  >([
+    {
+      text: "Bonjour, je suis votre assistant juridique. Comment puis-je vous aider aujourd'hui ?",
+      isAi: true,
+    },
   ]);
   const [input, setInput] = useState("");
   const [files, setFiles] = useState<File[]>([]);
@@ -55,12 +59,12 @@ const Index = () => {
   );
   const [mode, setMode] = useState<"rag" | "llm">("rag");
 
-  // Scroll automatique en bas quand messages ou isLoading changent
+  // Scroll automatique vers le bas quand messages ou isLoading changent
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
 
-  // Charger les conversations
+  // Chargement initial des conversations
   useEffect(() => {
     apiFetch<Conversation[]>(`/chat/conversations`)
       .then((data) => setConversations(data))
@@ -89,7 +93,10 @@ const Index = () => {
     apiFetch<Message[]>(`/chat/messages/${convId}`)
       .then((all) =>
         setMessages(
-          all.map((m) => ({ text: m.content, isAi: m.sender !== "user" }))
+          all.map((m) => ({
+            text: m.content,
+            isAi: m.sender !== "user",
+          }))
         )
       )
       .catch((e) => {
@@ -109,33 +116,47 @@ const Index = () => {
     setInput("");
     setIsLoading(true);
 
-    // Ajouter immédiatement le message user (optionnel)
+    // Ajout immédiat du message utilisateur dans l'UI
     setMessages((prev) => [...prev, { text: userMessage, isAi: false }]);
 
     try {
-      const endpoint = mode === "rag" ? "send-message" : "send-message-llm";
-
-      // Envoi du message user à l'API
-      await apiFetch(
-        `/chat/${endpoint}`,
-        {
+      if (mode === "rag") {
+        const response = await apiFetch<{
+          id: number;
+          sender: string;
+          content: string;
+          created_at: string;
+          is_ai: boolean;
+        }>("/rag/ask", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            question: userMessage,
+            conversation_id: selectedConvId,
+          }),
+    });
+    console.log("Réponse API RAG :", response);
+    setMessages((prev) => [
+      ...prev,
+      { text: response.content, isAi: true },
+    ]);
+      } else {
+        // Envoi au backend LLM classique
+        await apiFetch(`/chat/send-message-llm`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             conversation_id: selectedConvId,
             sender: "user",
             content: userMessage,
             is_ai: false,
           }),
-        }
-      );
+        });
 
-      // Recharger tous les messages depuis la base
-      const all = await apiFetch<Message[]>(`/chat/messages/${selectedConvId}`);
-      setMessages(all.map((m) => ({ text: m.content, isAi: m.sender !== "user" })));
-
+        // Recharge tous les messages
+        const all = await apiFetch<Message[]>(`/chat/messages/${selectedConvId}`);
+        setMessages(all.map((m) => ({ text: m.content, isAi: m.sender !== "user" })));
+      }
     } catch (e) {
       console.error(e);
     } finally {
@@ -146,13 +167,10 @@ const Index = () => {
   const startNewConversation = async () => {
     const title = prompt("Entrez le titre de la conversation :") || "Nouvelle conversation";
     try {
-      const conv = await apiFetch<Conversation>(
-        "/chat/conversation",
-        {
-          method: "POST",
-          body: JSON.stringify({ title }),
-        }
-      );
+      const conv = await apiFetch<Conversation>("/chat/conversation", {
+        method: "POST",
+        body: JSON.stringify({ title }),
+      });
       handleSelectConversation(conv.title);
       const allConvs = await apiFetch<Conversation[]>(`/chat/conversations`);
       setConversations(allConvs);
@@ -168,16 +186,17 @@ const Index = () => {
     if (!confirm(`Supprimer la conversation "${title}" ?`)) return;
 
     try {
-      await apiFetch(`/chat/conversations/${conv.id}`, {
-        method: "DELETE",
-      });
+      await apiFetch(`/chat/conversations/${conv.id}`, { method: "DELETE" });
       setConversations((prev) => prev.filter((c) => c.id !== conv.id));
 
       if (selectedConvId === conv.id) {
         setSelectedConvId(null);
         setSelectedTitle(undefined);
         setMessages([
-          { text: "Bonjour, je suis votre assistant juridique. Comment puis-je vous aider aujourd'hui ?", isAi: true },
+          {
+            text: "Bonjour, je suis votre assistant juridique. Comment puis-je vous aider aujourd'hui ?",
+            isAi: true,
+          },
         ]);
         localStorage.removeItem("convTitle");
       }
@@ -245,40 +264,44 @@ const Index = () => {
           </div>
         </ScrollArea>
 
-        <div className="p-4 border-t border-border glass">
-          {files.length > 0 && (
-            <div className="mb-4">
-              <FileUpload onFileSelect={() => {}} files={files} onRemoveFile={() => {}} />
-            </div>
-          )}
-          <div className="flex gap-2 items-center">
-            <Input
-              placeholder="Posez votre question juridique..."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSend()}
-              className="flex-1"
-              disabled={isLoading}
-            />
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="shrink-0 flex items-center gap-1">
-                  <Send className="h-4 w-4" />
-                  {mode === "rag" ? "Envoyer (RAG)" : "Envoyer (LLM)"}
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setMode("rag")}>RAG (Recherche documentaire)</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setMode("llm")}>LLM simple</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <Button onClick={handleSend} disabled={isLoading || (!input.trim() && files.length === 0)}>
-              <Send className="h-4 w-4" />
-            </Button>
-          </div>
+        <div className="p-4 border-t border-border glass flex items-center gap-2">
+          <Input
+            placeholder="Posez votre question..."
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+              }
+            }}
+            disabled={isLoading}
+          />
+          {/* Dropdown pour mode RAG / LLM */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon">
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem
+                onClick={() => setMode("rag")}
+                className={mode === "rag" ? "font-bold" : ""}
+              >
+                RAG
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setMode("llm")}
+                className={mode === "llm" ? "font-bold" : ""}
+              >
+                LLM simple
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button onClick={handleSend} disabled={isLoading} size="icon">
+            <Send />
+          </Button>
         </div>
       </main>
     </div>

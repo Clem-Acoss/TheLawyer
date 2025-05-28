@@ -19,6 +19,10 @@ PROJET-DROIT-IA-V2/
 │   │   │   ├── routes.py
 │   │   │   ├── service.py
 │   │   │ 
+│   │   ├── LLM/     
+│   │   │   ├── routes.py
+│   │   │   ├── rag_service.py
+│   │   │ 
 │   │   ├── config.py
 │   │   ├── crud.py
 │   │   ├── database.py

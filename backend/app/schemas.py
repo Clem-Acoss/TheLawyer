@@ -52,3 +52,7 @@ class MessageRequest(BaseModel):
     conversation_id: int
     sender: str
     content: str
+
+class QuestionRequest(BaseModel):
+    question: str
+    conversation_id: Optional[int] = None
