@@ -1,3 +1,7 @@
+
+
+//index.tsx
+
 import React, { useState, useEffect, useRef } from "react";
 import { Send, Menu, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -29,14 +33,20 @@ type Conversation = {
   title: string;
   created_at: string;
 };
-
+type MessageFromAPI = {
+  content: string;
+  sender: string;
+};
 type Message = {
   id: number;
   sender: string;
   content: string;
-  created_at: string; // correction: timestamp renommé en created_at pour cohérence avec backend
+  created_at: string;
 };
-
+type ApiResponse = {
+  content?: string;
+  response?: string;
+}
 const Index = () => {
   const { logout } = useUser();
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -59,12 +69,10 @@ const Index = () => {
   );
   const [mode, setMode] = useState<"rag" | "llm">("rag");
 
-  // Scroll automatique vers le bas quand messages ou isLoading changent
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
 
-  // Chargement initial des conversations
   useEffect(() => {
     apiFetch<Conversation[]>(`/chat/conversations`)
       .then((data) => setConversations(data))
@@ -107,55 +115,57 @@ const Index = () => {
 
   const handleSend = async () => {
     if (!input.trim() && files.length === 0) return;
+    
     if (selectedConvId === null) {
       alert("Veuillez sélectionner une conversation ou en créer une nouvelle.");
       return;
     }
-
+  
     const userMessage = input.trim();
     setInput("");
     setIsLoading(true);
-
-    // Ajout immédiat du message utilisateur dans l'UI
-    setMessages((prev) => [...prev, { text: userMessage, isAi: false }]);
-
+  
+    if (userMessage) {
+      setMessages((prev) => [...prev, { text: userMessage, isAi: false }]);
+    }
+  
     try {
-      if (mode === "rag") {
-        const response = await apiFetch<{
-          id: number;
-          sender: string;
-          content: string;
-          created_at: string;
-          is_ai: boolean;
-        }>("/rag/ask", {
+      if (files.length > 0) {
+        console.log("Envoi de fichier(s) PDF...");
+        const formData = new FormData();
+        formData.append("conversation_id", String(selectedConvId));
+        formData.append("question", userMessage || "");
+        formData.append("file", files[0]);
+      
+        // Récupérer token JWT
+        const token = localStorage.getItem("token");
+        if (!token) {
+          alert("Vous devez être connecté.");
+          setIsLoading(false);
+          return;
+        }
+      
+        const response = await fetch("/rag/ask-with-pdf", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            question: userMessage,
-            conversation_id: selectedConvId,
-          }),
-    });
-    console.log("Réponse API RAG :", response);
-    setMessages((prev) => [
-      ...prev,
-      { text: response.content, isAi: true },
-    ]);
-      } else {
-        // Envoi au backend LLM classique
-        await apiFetch(`/chat/send-message-llm`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            conversation_id: selectedConvId,
-            sender: "user",
-            content: userMessage,
-            is_ai: false,
-          }),
+          body: formData,
+          headers: {
+            "Authorization": `Bearer ${token}`,  // <-- Ajouter ici le header d’authentification
+            // NOTE: Ne PAS mettre Content-Type ici car fetch avec FormData le gère automatiquement
+          },
         });
-
-        // Recharge tous les messages
-        const all = await apiFetch<Message[]>(`/chat/messages/${selectedConvId}`);
-        setMessages(all.map((m) => ({ text: m.content, isAi: m.sender !== "user" })));
+      
+        if (!response.ok) throw new Error("Erreur lors de l'envoi du PDF.");
+      
+        const data: ApiResponse = await response.json();
+      
+        setMessages((prev) => [
+          ...prev,
+          { text: data.content || data.response || "Réponse reçue.", isAi: true },
+        ]);
+        setFiles([]);
+      } else {
+        // Ton code actuel pour le cas sans fichier
+        // (probablement déjà gère l'Authorization ailleurs)
       }
     } catch (e) {
       console.error(e);
@@ -163,6 +173,7 @@ const Index = () => {
       setIsLoading(false);
     }
   };
+
 
   const startNewConversation = async () => {
     const title = prompt("Entrez le titre de la conversation :") || "Nouvelle conversation";
@@ -264,44 +275,54 @@ const Index = () => {
           </div>
         </ScrollArea>
 
-        <div className="p-4 border-t border-border glass flex items-center gap-2">
-          <Input
-            placeholder="Posez votre question..."
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSend();
-              }
-            }}
-            disabled={isLoading}
+        <div className="p-4 border-t border-border glass flex flex-col gap-2">
+          {/* Upload PDF */}
+          <FileUpload
+            files={files}
+            onFileSelect={setFiles}  // <- nom correct ici
+            onRemoveFile={(name) =>
+              setFiles((prev) => prev.filter((file) => file.name !== name))
+            }
           />
-          {/* Dropdown pour mode RAG / LLM */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon">
-                <ChevronDown className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem
-                onClick={() => setMode("rag")}
-                className={mode === "rag" ? "font-bold" : ""}
-              >
-                RAG
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => setMode("llm")}
-                className={mode === "llm" ? "font-bold" : ""}
-              >
-                LLM simple
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <Button onClick={handleSend} disabled={isLoading} size="icon">
-            <Send />
-          </Button>
+
+          <div className="flex items-center gap-2">
+            <Input
+              placeholder="Posez votre question..."
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
+              disabled={isLoading}
+            />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem
+                  onClick={() => setMode("rag")}
+                  className={mode === "rag" ? "font-bold" : ""}
+                >
+                  RAG
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setMode("llm")}
+                  className={mode === "llm" ? "font-bold" : ""}
+                >
+                  LLM simple
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button onClick={handleSend} disabled={isLoading} size="icon">
+              <Send />
+            </Button>
+          </div>
         </div>
       </main>
     </div>

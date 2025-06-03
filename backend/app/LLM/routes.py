@@ -1,3 +1,14 @@
+
+
+#routes.py
+
+
+from fastapi import UploadFile, File, HTTPException
+from app.LLM.rag_service import add_pdf_to_rag
+from app.LLM import rag_service
+import shutil
+import uuid
+import os
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 import requests
@@ -7,6 +18,7 @@ from app import crud, models
 from app.auth.deps import get_current_user
 from app.schemas import MessageCreate
 router = APIRouter()
+router.include_router(rag_service.router, prefix="/rag")
 
 @router.post("/chat/send-message-llm", response_model=MessageOut)
 def send_message_llm(
@@ -51,3 +63,23 @@ def send_message_llm(
     ai_message = crud.create_message(db=db, message_data=ai_message_data)
 
     return ai_message
+
+@router.post("/upload-pdf")
+async def upload_pdf(file: UploadFile = File(...)):
+    if file.content_type != "application/pdf":
+        raise HTTPException(status_code=400, detail="Seuls les fichiers PDF sont acceptés.")
+    
+    # Sauvegarde temporaire du PDF dans un dossier temporaire
+    tmp_dir = "/tmp/uploads"
+    os.makedirs(tmp_dir, exist_ok=True)
+    tmp_path = os.path.join(tmp_dir, f"{uuid.uuid4()}.pdf")
+
+    with open(tmp_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    try:
+        add_pdf_to_rag(tmp_path)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur lors de l'indexation PDF: {str(e)}")
+
+    return {"detail": "PDF ajouté et indexé avec succès"}

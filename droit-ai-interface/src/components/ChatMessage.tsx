@@ -27,7 +27,7 @@ export const ChatMessage = ({ message, isAi, isLoading }: ChatMessageProps) => {
         {isLoading ? (
           <div className="h-4 w-12 animate-pulse bg-muted rounded" />
         ) : (
-          <p className="text-sm leading-relaxed">{message}</p>
+          <div className="text-sm leading-relaxed">{message}</div>
         )}
       </div>
     </div>
