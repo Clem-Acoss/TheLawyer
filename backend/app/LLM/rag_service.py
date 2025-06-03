@@ -193,7 +193,7 @@ async def ask_with_pdf(
     top_chunks = [chunks_list[i] for i in I[0] if i < len(chunks_list)]
     context = "\n\n".join(top_chunks)
 
-    prompt = f"""Voici des extraits juridiques :
+    prompt = f"""reponse à la question en utilisant les extraits suivants :
 {context}
 
 Question : {question}

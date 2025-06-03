@@ -3,7 +3,7 @@
 //index.tsx
 
 import React, { useState, useEffect, useRef } from "react";
-import { Send, Menu, ChevronDown } from "lucide-react";
+import { Send, Menu, ChevronDown, FileText } from "lucide-react"; 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -50,7 +50,7 @@ type ApiResponse = {
 const Index = () => {
   const { logout } = useUser();
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
-
+  const [showUpload, setShowUpload] = useState(false);
   const [messages, setMessages] = useState<
     Array<{ text: string; isAi: boolean }>
   >([
@@ -218,6 +218,7 @@ const Index = () => {
 
   return (
     <div className="flex h-screen bg-background">
+      {/* Sidebar */}
       <aside className="hidden md:flex w-80 border-r border-border flex-col p-4">
         <Button variant="outline" className="mb-4 w-full" onClick={startNewConversation}>
           Nouvelle conversation
@@ -231,7 +232,9 @@ const Index = () => {
         {conversations.length === 0 && <p>Aucune conversation disponible</p>}
       </aside>
 
+      {/* Main */}
       <main className="flex-1 flex flex-col">
+        {/* Header */}
         <header className="h-14 border-b border-border flex items-center px-4 glass">
           <Sheet>
             <SheetTrigger asChild>
@@ -260,6 +263,7 @@ const Index = () => {
           <h1 className="text-lg font-semibold ml-4">Assistant Juridique</h1>
         </header>
 
+        {/* Messages */}
         <ScrollArea className="flex-1 p-4">
           <div className="space-y-4">
             {messages.map((msg, i) => (
@@ -275,15 +279,18 @@ const Index = () => {
           </div>
         </ScrollArea>
 
+        {/* Zone d’input et PDF */}
         <div className="p-4 border-t border-border glass flex flex-col gap-2">
-          {/* Upload PDF */}
-          <FileUpload
-            files={files}
-            onFileSelect={setFiles}  // <- nom correct ici
-            onRemoveFile={(name) =>
-              setFiles((prev) => prev.filter((file) => file.name !== name))
-            }
-          />
+          {/* Affichage conditionnel du FileUpload */}
+          {showUpload && (
+            <FileUpload
+              files={files}
+              onFileSelect={setFiles}
+              onRemoveFile={(name) =>
+                setFiles((prev) => prev.filter((file) => file.name !== name))
+              }
+            />
+          )}
 
           <div className="flex items-center gap-2">
             <Input
@@ -298,6 +305,18 @@ const Index = () => {
               }}
               disabled={isLoading}
             />
+
+            {/* Bouton d’affichage de la zone d’upload */}
+            <Button
+              variant={showUpload ? "default" : "outline"}
+              size="icon"
+              onClick={() => setShowUpload((prev) => !prev)}
+              title="Importer un PDF"
+            >
+              <FileText className="h-5 w-5" />
+            </Button>
+
+            {/* Menu déroulant pour RAG/LLM */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="icon">
@@ -319,6 +338,8 @@ const Index = () => {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+
+            {/* Bouton envoyer */}
             <Button onClick={handleSend} disabled={isLoading} size="icon">
               <Send />
             </Button>
