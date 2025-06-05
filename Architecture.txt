@@ -14,6 +14,7 @@ PROJET-DROIT-IA-V2/
 │   │   ├── auth/     
 │   │   │   ├── routes.py
 │   │   │   ├── utils.py
+│   │   │   ├── deps.py
 │   │   │ 
 │   │   ├── chat/     
 │   │   │   ├── routes.py

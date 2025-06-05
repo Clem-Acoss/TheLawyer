@@ -1,3 +1,40 @@
+
+
+
+
+"""
+Fichier : deps.py (dossier auth)
+---------------------------------
+
+Ce module contient des dépendances utilisées dans le système d'authentification de l'API FastAPI.
+
+Fonctionnalités :
+- Fournit une session de base de données (`get_db`) à injecter dans les routes ou services.
+- Authentifie l'utilisateur courant via un token JWT (`get_current_user`) pour sécuriser les routes protégées.
+
+Fonctions :
+- get_db() : Crée une session SQLAlchemy et la ferme automatiquement après usage.
+- get_current_user(token, db) : Décode le JWT reçu via OAuth2, extrait l'ID de l'utilisateur,
+  le vérifie en base et retourne l’objet `User` correspondant. Lève une exception HTTP 401 en cas d’échec.
+
+Utilisation :
+- Ces fonctions sont généralement appelées avec `Depends()` dans les routes pour obtenir 
+  un utilisateur authentifié et une session de base de données active.
+
+Dépendances :
+- FastAPI : gestion des dépendances et exceptions HTTP
+- OAuth2PasswordBearer : récupération du token JWT depuis les en-têtes Authorization
+- jose.jwt : déchiffrement et validation du JWT
+- SQLAlchemy : accès aux données utilisateur
+- config.py : variables secrètes pour décoder le JWT
+
+Exemple :
+```python
+@app.get("/me")
+def read_users_me(current_user: User = Depends(get_current_user)):
+    return current_user
+"""
+
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt

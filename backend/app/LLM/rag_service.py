@@ -1,7 +1,43 @@
 
 
 #rag_service.py
+"""
+Fichier : rag_service.py (module LLM/RAG)
+-----------------------------------------
 
+Ce module gère le pipeline complet du Retrieval-Augmented Generation (RAG) pour l’assistant juridique.
+
+Il inclut :
+- L'initialisation du corpus vectorisé depuis un PDF (OCR inclus si besoin)
+- L’indexation FAISS avec `SentenceTransformer`
+- La récupération des chunks les plus pertinents
+- La construction d’un prompt pour le modèle LLaMA
+- L’appel à Ollama pour la génération de la réponse
+- L’enregistrement des messages (utilisateur et IA) en base
+
+Fonctionnalités clés :
+- `/ask` : Pose une question en utilisant un PDF déjà chargé (au démarrage).
+- `/ask-with-pdf` : Pose une question en joignant dynamiquement un PDF à indexer.
+
+Composants principaux :
+- `fitz` (PyMuPDF) + `pytesseract` : extraction texte ou OCR depuis PDF
+- `faiss` : moteur de recherche vectorielle en mémoire
+- `SentenceTransformer("all-MiniLM-L6-v2")` : encodeur pour créer les embeddings
+- `chunks_list` : stocke les extraits textuels alignés avec FAISS
+
+Remarques :
+- Le fichier PDF principal est défini par `PDF_PATH`.
+- Le moteur FAISS et les chunks sont globaux et en mémoire (volatiles).
+- Lors de l'appel RAG, la base PostgreSQL est utilisée pour stocker les messages.
+
+Exemples :
+- `/ask` :
+```json
+{
+  "question": "Quelles sont les exonérations liées au contrat d'apprentissage ?",
+  "conversation_id": 3
+}
+"""
 
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session

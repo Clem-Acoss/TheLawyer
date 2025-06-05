@@ -1,7 +1,30 @@
+"""
+Fichier : routes.py (module LLM)
+--------------------------------
 
+Ce module définit les routes FastAPI pour l’interaction avec le modèle LLaMA local (hors RAG)
+et pour l’indexation manuelle de fichiers PDF dans le système RAG.
 
-#routes.py
+Il inclut :
+- Un endpoint `/chat/send-message-llm` pour envoyer un message simple au modèle LLaMA3.2 via Ollama
+- Un endpoint `/upload-pdf` pour charger et indexer un fichier PDF dans le moteur FAISS
+- L’inclusion des routes RAG depuis `rag_service.py` via `/rag`
 
+Fonctionnalités clés :
+- Enregistrement automatique des messages utilisateur et IA dans la base PostgreSQL
+- Utilisation d’Ollama local pour générer une réponse à partir d’un prompt brut
+- Gestion de l’upload de fichiers PDF, avec indexation vectorielle
+
+Composants principaux :
+- `requests` : pour interagir avec l’API Ollama (`localhost:11434`)
+- `shutil`, `uuid`, `os` : pour gérer les fichiers PDF temporairement
+- `rag_service` : import de la fonction `add_pdf_to_rag` et des routes
+
+Remarques :
+- Le PDF est temporairement stocké dans `/tmp/uploads` avant d’être indexé
+- L’indexation utilise FAISS et SentenceTransformer, gérés dans `rag_service.py`
+- Le modèle utilisé est défini dans l’appel à l’API Ollama (`model: llama3.2`)
+"""
 
 from fastapi import UploadFile, File, HTTPException
 from app.LLM.rag_service import add_pdf_to_rag

@@ -1,8 +1,8 @@
-📦 Snapshot de l'environnement - Ven 23 mai 2025 16:46:25 CEST
+📦 Snapshot de l'environnement - Jeu  5 jui 2025 10:40:06 CEST
 ==========================================
 
 
-=== [🔧 Versions des outils - Ven 23 mai 2025 16:46:25 CEST] ===
+=== [🔧 Versions des outils - Jeu  5 jui 2025 10:40:06 CEST] ===
 Node: v20.17.0
 npm: 10.8.2
 Python: Python 3.11.9
@@ -10,7 +10,8 @@ Vite: vite/6.3.5 darwin-arm64 node-v20.17.0
 Ollama: ollama version is 0.7.0
 
 
-=== [🌍 Variables d’environnement - Ven 23 mai 2025 16:46:33 CEST] ===
+=== [🌍 Variables d’environnement - Jeu  5 jui 2025 10:40:14 CEST] ===
+VITE_API_URL=http://localhost:8000
 TERM_PROGRAM=vscode
 PYENV_ROOT=/Users/clementgardair/.pyenv
 TERM=xterm-256color
@@ -28,18 +29,21 @@ COMMAND_MODE=unix2003
 SSH_AUTH_SOCK=/private/tmp/com.apple.launchd.V1u44wEYFM/Listeners
 VSCODE_PROFILE_INITIALIZED=1
 __CF_USER_TEXT_ENCODING=0x1F5:0x0:0x0
+VIRTUAL_ENV=/Users/clementgardair/AcossDev/TheLawyer/venvTheLawyer
 PAGER=less
+PYDEVD_DISABLE_FILE_VALIDATION=1
 LSCOLORS=Gxfxcxdxbxegedabagacad
-PATH=/Users/clementgardair/.npm-global/bin:/Users/clementgardair/.pyenv/shims:/Users/clementgardair/.pyenv/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/Library/Apple/usr/bin:/usr/local/share/dotnet:~/.dotnet/tools:/Users/clementgardair/.pyenv/bin:/Users/clementgardair/Library/Application Support/Code/User/globalStorage/github.copilot-chat/debugCommand
-LaunchInstanceID=9617F2DE-08F8-4804-AD21-BC29279749D8
+PATH=/Users/clementgardair/.vscode/extensions/ms-python.python-2025.6.1-darwin-arm64/python_files/deactivate/zsh:/Users/clementgardair/AcossDev/TheLawyer/venvTheLawyer/bin:/Users/clementgardair/.npm-global/bin:/Users/clementgardair/.pyenv/shims:/Users/clementgardair/.pyenv/bin:/Users/clementgardair/.vscode/extensions/ms-python.python-2025.6.1-darwin-arm64/python_files/deactivate/zsh:/Users/clementgardair/AcossDev/TheLawyer/venvTheLawyer/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/Library/Apple/usr/bin:/usr/local/share/dotnet:~/.dotnet/tools:/Users/clementgardair/.vscode/extensions/ms-python.python-2025.6.1-darwin-arm64/python_files/deactivate/zsh:/Users/clementgardair/AcossDev/TheLawyer/venvTheLawyer/bin:/Users/clementgardair/.npm-global/bin:/Users/clementgardair/.pyenv/bin
 USER_ZDOTDIR=/Users/clementgardair
 __CFBundleIdentifier=com.microsoft.VSCode
 PWD=/Users/clementgardair/AcossDev/TheLawyer
 LANG=fr_FR.UTF-8
+BUNDLED_DEBUGPY_PATH=/Users/clementgardair/.vscode/extensions/ms-python.debugpy-2025.8.0-darwin-arm64/bundled/libs/debugpy
 VSCODE_GIT_ASKPASS_EXTRA_ARGS=
 XPC_FLAGS=0x0
 XPC_SERVICE_NAME=0
 VSCODE_INJECTION=1
+VSCODE_DEBUGPY_ADAPTER_ENDPOINTS=/Users/clementgardair/.vscode/extensions/ms-python.debugpy-2025.8.0-darwin-arm64/.noConfigDebugAdapterEndpoints/endpoint-9a5aabe061df664f.txt
 PYENV_SHELL=zsh
 SHLVL=2
 HOME=/Users/clementgardair
@@ -52,23 +56,33 @@ VSCODE_GIT_ASKPASS_NODE=/Applications/Visual Studio Code.app/Contents/Frameworks
 GIT_ASKPASS=/Applications/Visual Studio Code.app/Contents/Resources/app/extensions/git/dist/askpass.sh
 INFOPATH=/opt/homebrew/share/info:/opt/homebrew/share/info:
 HOMEBREW_CELLAR=/opt/homebrew/Cellar
-SECURITYSESSIONID=186c3
+DATABASE_URL=postgresql+psycopg2://clementgardair:root@localhost:5432/baseTheLawyer
+VIRTUAL_ENV_PROMPT=(venvTheLawyer) 
 COLORTERM=truecolor
 _=/usr/bin/printenv
 
 
-=== [📦 Paquets Node.js installés - Ven 23 mai 2025 16:46:33 CEST] ===
+=== [📦 Paquets Node.js installés - Jeu  5 jui 2025 10:40:14 CEST] ===
 /Users/clementgardair/AcossDev/TheLawyer
 └── (empty)
 
 
 
-=== [🐍 Paquets Python installés (venv) - Ven 23 mai 2025 16:46:35 CEST] ===
+=== [🐍 Paquets Python installés (venv) - Jeu  5 jui 2025 10:40:18 CEST] ===
 annotated-types==0.7.0
 anyio==4.9.0
+asyncpg==0.30.0
+bcrypt==4.0.1
+black==23.9.1
 certifi==2025.4.26
+cffi==1.17.1
 charset-normalizer==3.4.2
 click==8.2.1
+cryptography==45.0.3
+databases==0.9.0
+dnspython==2.7.0
+ecdsa==0.19.1
+email_validator==2.2.0
 faiss-cpu==1.11.0
 fastapi==0.115.12
 filelock==3.18.0
@@ -78,26 +92,46 @@ hf-xet==1.1.2
 httptools==0.6.4
 huggingface-hub==0.32.0
 idna==3.10
+iniconfig==2.1.0
+isort==5.12.0
 Jinja2==3.1.6
 joblib==1.5.1
 MarkupSafe==3.0.2
 mpmath==1.3.0
+mypy_extensions==1.1.0
 networkx==3.4.2
 numpy==2.2.6
 packaging==25.0
+passlib==1.7.4
+pathspec==0.12.1
+pdf2image==1.17.0
 pillow==11.2.1
+platformdirs==4.3.8
+pluggy==1.6.0
+psycopg==3.2.9
+psycopg-binary==3.2.9
+psycopg2-binary==2.9.10
+pyasn1==0.4.8
+pycparser==2.22
 pydantic==2.11.5
 pydantic_core==2.33.2
+PyMuPDF==1.26.0
+pytesseract==0.3.13
+pytest==7.4.2
 python-dotenv==1.1.0
+python-jose==3.4.0
 python-multipart==0.0.20
 PyYAML==6.0.2
 regex==2024.11.6
 requests==2.32.3
+rsa==4.9.1
 safetensors==0.5.3
 scikit-learn==1.6.1
 scipy==1.15.3
 sentence-transformers==4.1.0
+six==1.17.0
 sniffio==1.3.1
+SQLAlchemy==2.0.41
 starlette==0.46.2
 sympy==1.14.0
 threadpoolctl==3.6.0
@@ -114,10 +148,10 @@ watchfiles==1.0.5
 websockets==15.0.1
 
 
-=== [🌐 Ports écoutés - Ven 23 mai 2025 16:46:41 CEST] ===
+=== [🌐 Ports écoutés - Jeu  5 jui 2025 10:40:22 CEST] ===
 COMMAND     PID           USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
-rapportd   1252 clementgardair   14u  IPv4  0xe372ad7206cfdee      0t0  TCP *:49249 (LISTEN)
-rapportd   1252 clementgardair   15u  IPv6 0x40660af40f7049e8      0t0  TCP *:49249 (LISTEN)
+rapportd   1252 clementgardair   10u  IPv4 0xb6631a05cd018e30      0t0  TCP *:53763 (LISTEN)
+rapportd   1252 clementgardair   11u  IPv6 0x8876e76aa6a83d83      0t0  TCP *:53763 (LISTEN)
 ControlCe  1434 clementgardair    8u  IPv4 0xcea2fe3c88f0c3a3      0t0  TCP *:7000 (LISTEN)
 ControlCe  1434 clementgardair    9u  IPv6 0xffcafe8cad829d68      0t0  TCP *:7000 (LISTEN)
 ControlCe  1434 clementgardair   10u  IPv4 0x9b04252d2019565b      0t0  TCP *:5000 (LISTEN)
@@ -125,12 +159,12 @@ ControlCe  1434 clementgardair   11u  IPv6 0xfd0d2672a29352c7      0t0  TCP *:50
 Widgetter  3180 clementgardair    5u  IPv6 0x25ef56ed55f16348      0t0  TCP *:42198 (LISTEN)
 Parallels  3495 clementgardair    8u  IPv4 0xbf27e450e1c8db94      0t0  TCP 127.0.0.1:57889 (LISTEN)
 Parallels  3495 clementgardair   11u  IPv6 0x8a5398777b85da98      0t0  TCP [::1]:57889 (LISTEN)
+ollama    31460 clementgardair    3u  IPv4 0x9e3bd2e4cc617078      0t0  TCP 127.0.0.1:11434 (LISTEN)
 postgres  39035 clementgardair    7u  IPv6 0x3cbe5af8fc82b8a1      0t0  TCP [::1]:5432 (LISTEN)
 postgres  39035 clementgardair    8u  IPv4 0x1f0a66b972aa8be8      0t0  TCP 127.0.0.1:5432 (LISTEN)
-ollama    89834 clementgardair    3u  IPv4 0xd645d5f9c741b0a5      0t0  TCP 127.0.0.1:11434 (LISTEN)
 
 
-=== [🖥️ Infos système macOS - Ven 23 mai 2025 16:46:42 CEST] ===
+=== [🖥️ Infos système macOS - Jeu  5 jui 2025 10:40:22 CEST] ===
 Software:
 
     System Software Overview:
@@ -143,7 +177,7 @@ Software:
       User Name: Clément  Gardair (clementgardair)
       Secure Virtual Memory: Enabled
       System Integrity Protection: Enabled
-      Time since boot: 12 hours, 50 minutes
+      Time since boot: 13 days, 6 hours, 44 minutes
 
 Hardware:
 
@@ -164,7 +198,7 @@ Hardware:
 
 
 
-=== [🔧 Configuration Git - Ven 23 mai 2025 16:46:44 CEST] ===
+=== [🔧 Configuration Git - Jeu  5 jui 2025 10:40:26 CEST] ===
 credential.helper=osxkeychain
 init.defaultbranch=main
 filter.lfs.clean=git-lfs clean -- %f
@@ -187,13 +221,14 @@ branch.master.vscode-merge-base=origin/master
 branch.wip_BaseCsv.remote=origin
 branch.wip_BaseCsv.merge=refs/heads/wip_BaseCsv
 branch.wip_BaseCsv.vscode-merge-base=origin/wip_BaseCsv
+branch.wip_postgreSQL.vscode-merge-base=origin/wip_BaseCsv
 
 
-=== [📁 package.json - Ven 23 mai 2025 16:46:44 CEST] ===
+=== [📁 package.json - Jeu  5 jui 2025 10:40:26 CEST] ===
 cat: package.json: No such file or directory
 
 
-=== [📁 package-lock.json - Ven 23 mai 2025 16:46:44 CEST] ===
+=== [📁 package-lock.json - Jeu  5 jui 2025 10:40:26 CEST] ===
 {
   "name": "TheLawyer",
   "lockfileVersion": 3,
@@ -201,4 +236,4 @@ cat: package.json: No such file or directory
   "packages": {}
 }
 
-✅ Snapshot completé avec succès à Ven 23 mai 2025 16:46:44 CEST
+✅ Snapshot completé avec succès à Jeu  5 jui 2025 10:40:27 CEST

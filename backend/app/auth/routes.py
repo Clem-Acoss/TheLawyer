@@ -1,5 +1,45 @@
 
-#backend/app/auth/routes.py 
+"""
+Fichier : routes.py (dossier auth)
+----------------------------------
+
+Ce module définit les routes d'authentification de l'API (inscription et connexion) via FastAPI.
+
+Fonctionnalités :
+- /auth/signup : Permet à un nouvel utilisateur de s’inscrire avec email et mot de passe.
+- /auth/login  : Permet à un utilisateur existant de se connecter et de recevoir un token JWT.
+
+Détails des routes :
+- POST /auth/signup
+  - Données : JSON conforme au schéma `UserCreate`
+  - Vérifie si l’email existe déjà
+  - Hash le mot de passe et crée un utilisateur en base
+  - Réponse : objet `UserOut` (sans le mot de passe)
+
+- POST /auth/login
+  - Données : `OAuth2PasswordRequestForm` (username + password)
+  - Vérifie l’identité (email et mot de passe hashé)
+  - Génère un JWT signé contenant l’ID de l’utilisateur
+  - Réponse : access_token + token_type ("bearer")
+
+Dépendances :
+- FastAPI : gestion des routes et exceptions
+- SQLAlchemy : session DB
+- Schémas : `UserCreate`, `UserOut`, `Token`
+- Utils : fonctions de hash, vérification du mot de passe, génération de token
+- Dépendance `get_db` pour injecter la session DB
+
+Utilisation :
+Ces routes sont utilisées par le frontend pour inscrire ou authentifier les utilisateurs,
+et pour obtenir le token JWT nécessaire à l’accès aux routes sécurisées.
+
+Exemple d’appel (POST /auth/login) :
+```json
+{
+  "username": "user@example.com",
+  "password": "yourpassword"
+}
+"""
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session

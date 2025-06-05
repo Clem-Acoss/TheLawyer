@@ -1,3 +1,29 @@
+
+"""
+Fichier : main.py
+-----------------
+
+Ce module initialise et configure l’application FastAPI principale.
+
+Il inclut :
+- La création de l’instance FastAPI
+- La configuration du middleware CORS pour autoriser le frontend
+- L’initialisation de la base de données (création des tables)
+- L’enregistrement des routes (authentification, chat, LLM, RAG)
+
+Fonctionnalités principales :
+- Gestion des requêtes API via les différents routers
+- Sécurisation CORS pour permettre les appels depuis le frontend local
+- Chargement automatique des modèles et services nécessaires au démarrage
+
+Remarques :
+- Le serveur doit être démarré avec `uvicorn app.main:app`
+- La vectorisation PDF et indexation RAG peuvent être lancées au démarrage via le router `rag_service`
+- Le backend supporte plusieurs modules fonctionnels (auth, chat, LLM, RAG) de manière modulaire
+"""
+
+
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 

@@ -1,3 +1,36 @@
+
+"""
+Fichier : crud.py
+------------------
+
+Ce module gère les opérations CRUD (Create, Read, Update, Delete) sur les entités principales de l’application.
+
+Il permet d’interagir avec la base de données via SQLAlchemy et couvre les objets suivants :
+- Utilisateurs (`User`)
+- Conversations (`Conversation`)
+- Messages (`Message`)
+
+Fonctionnalités principales :
+- Gestion des utilisateurs : création, récupération par email ou ID, authentification
+- Gestion des conversations : création, récupération par utilisateur, suppression sécurisée par utilisateur
+- Gestion des messages : création et récupération par conversation
+
+Dépendances :
+- `Session` de SQLAlchemy pour la gestion des transactions
+- Fonctions de hachage et vérification de mot de passe pour la sécurité utilisateur
+- Schémas Pydantic pour la validation des données en entrée
+
+Remarques :
+- Chaque fonction engage une transaction, commite et rafraîchit l’objet pour retourner l’état à jour
+- Les suppressions sont sécurisées par contrôle de l’utilisateur propriétaire
+- Les fonctions retournent des instances ORM ou des listes d’objets, ou `None` si aucun résultat
+
+Ce module est utilisé par les couches API et services pour accéder aux données métiers.
+"""
+
+
+
+
 from typing import Optional, List
 from sqlalchemy.orm import Session
 from app.models import User, Conversation, Message

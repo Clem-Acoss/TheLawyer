@@ -1,6 +1,37 @@
+"""
+Fichier : routes.py (dossier chat)
+----------------------------------
 
-#backend/app/chat/routes.py
+Ce module définit les routes liées au système de messagerie (chat) de l'application.
 
+Routes principales :
+- POST /chat/conversation : Crée une nouvelle conversation (titre requis).
+- GET /chat/conversations : Récupère toutes les conversations de l’utilisateur connecté.
+- POST /chat/send-message : Ajoute un message à une conversation existante.
+- GET /chat/messages/{conversation_id} : Récupère les messages d’une conversation donnée.
+- DELETE /chat/conversations/{conversation_id} : Supprime une conversation appartenant à l’utilisateur.
+
+Dépendances :
+- FastAPI : pour la déclaration des routes et l’injection de dépendances (`Depends`).
+- SQLAlchemy ORM : pour les opérations CRUD sur la base de données.
+- Schémas Pydantic (`schemas`) : pour valider les entrées/sorties.
+- Authentification :
+    - `get_current_user()` : protège chaque route pour qu’elle soit accessible uniquement à un utilisateur authentifié.
+    - `get_db()` : fournit une session de base de données.
+
+Fonctionnalité clé :
+Toutes les opérations sont restreintes à l'utilisateur connecté. Cela garantit que les utilisateurs ne peuvent interagir qu’avec leurs propres conversations.
+
+Exemple :
+```http
+POST /chat/send-message
+{
+  "conversation_id": 1,
+  "sender": "user",
+  "content": "Bonjour",
+  "is_ai": false
+}
+"""
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session

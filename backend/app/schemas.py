@@ -1,5 +1,29 @@
+"""
+Fichier : schemas.py
+--------------------
 
-#backend/app/schemas.py
+Définition des schémas Pydantic utilisés pour la validation et la sérialisation des données
+dans les échanges API.
+
+Schémas principaux :
+- UserCreate / UserOut : création et sortie d’un utilisateur.
+- Token : données du jeton d’accès JWT.
+- ConversationCreate / ConversationOut : création et sortie d’une conversation.
+- MessageCreate / MessageOut : création et sortie d’un message.
+- MessageRequest : structure pour l’envoi de message via l’API.
+- QuestionRequest : structure pour poser une question avec option conversation associée.
+
+Caractéristiques techniques :
+- Utilisation de Pydantic pour validation automatique et gestion ORM mode.
+- Typage précis avec EmailStr, datetime, bool, Optional.
+- Séparation claire entre modèles d’entrée (Create, Request) et de sortie (Out).
+- Gestion des champs optionnels et valeurs par défaut.
+
+Remarques :
+- Ces schémas facilitent l’intégration et la documentation automatique (OpenAPI).
+- Adaptés au backend FastAPI pour garantir cohérence des données échangées.
+"""
+
 
 from pydantic import BaseModel, EmailStr
 from typing import List, Optional

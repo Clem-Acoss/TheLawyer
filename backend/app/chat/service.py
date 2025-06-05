@@ -1,7 +1,36 @@
 
-#backend/app/chat/service.py
+"""
+Fichier : service.py (dossier chat)
+-----------------------------------
 
+Ce module regroupe la logique métier liée aux conversations et aux messages (chat).
 
+Fonctions :
+- create_conversation(db, user_id, title) :
+    Crée une nouvelle conversation pour un utilisateur donné.
+    Paramètres : ID de l'utilisateur, titre de la conversation.
+
+- get_conversations(db, user_id) :
+    Récupère toutes les conversations appartenant à un utilisateur.
+
+- add_message(db, conversation_id, sender, content, is_ai=False) :
+    Ajoute un message dans une conversation spécifique.
+    Le message peut être envoyé par un humain ou une IA (`is_ai=True`).
+
+- get_messages(db, conversation_id) :
+    Récupère tous les messages liés à une conversation donnée.
+
+Dépendances :
+- SQLAlchemy ORM : pour interagir avec les tables `Conversation` et `Message` définies dans `models`.
+- Pas de validation ici : les données sont supposées déjà validées par les schémas Pydantic (côté routes).
+
+Responsabilité :
+Ce fichier agit comme couche de service intermédiaire entre les routes (`routes.py`) et la base de données (`models.py`).
+
+Exemple de création de message :
+```python
+add_message(db, conversation_id=3, sender="user", content="Bonjour", is_ai=False)
+"""
 
 
 from sqlalchemy.orm import Session
