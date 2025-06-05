@@ -49,7 +49,7 @@ def send_message_llm(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    # Crée un objet MessageCreate pour le message utilisateur
+   
     user_message_data = MessageCreate(
         conversation_id=request.conversation_id,
         sender=request.sender,
@@ -58,7 +58,7 @@ def send_message_llm(
     )
     user_message = crud.create_message(db=db, message_data=user_message_data)
 
-    # Appel au modèle local
+   
     try:
         response = requests.post(
             "http://localhost:11434/api/generate",
@@ -76,7 +76,7 @@ def send_message_llm(
     result = response.json()
     ai_response = result.get("response", "[Réponse vide]")
 
-    # Crée un objet MessageCreate pour la réponse IA
+    
     ai_message_data = MessageCreate(
         conversation_id=request.conversation_id,
         sender="assistant",
@@ -92,7 +92,7 @@ async def upload_pdf(file: UploadFile = File(...)):
     if file.content_type != "application/pdf":
         raise HTTPException(status_code=400, detail="Seuls les fichiers PDF sont acceptés.")
     
-    # Sauvegarde temporaire du PDF dans un dossier temporaire
+    
     tmp_dir = "/tmp/uploads"
     os.makedirs(tmp_dir, exist_ok=True)
     tmp_path = os.path.join(tmp_dir, f"{uuid.uuid4()}.pdf")

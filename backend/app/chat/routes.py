@@ -38,7 +38,7 @@ from sqlalchemy.orm import Session
 from app.database import SessionLocal
 from app.chat import service
 from app import schemas, models
-from app.auth.deps import get_db, get_current_user  # ✅ import des dépendances
+from app.auth.deps import get_db, get_current_user  
 from typing import List
 
 router = APIRouter(prefix="/chat", tags=["chat"])
@@ -47,14 +47,14 @@ router = APIRouter(prefix="/chat", tags=["chat"])
 def create_conv(
     conv: schemas.ConversationCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)  # ✅ récupération depuis le token
+    current_user: models.User = Depends(get_current_user)  
 ):
     return service.create_conversation(db, user_id=current_user.id, title=conv.title)
 
 @router.get("/conversations", response_model=List[schemas.ConversationOut])
 def get_convs(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)  # ✅ on ne passe plus le user_id dans l'URL
+    current_user: models.User = Depends(get_current_user)  
 ):
     return service.get_conversations(db, user_id=current_user.id)
 
@@ -70,9 +70,9 @@ def post_msg(
 def get_msgs(
     conversation_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)  # ✅ protection des messages
+    current_user: models.User = Depends(get_current_user)  
 ):
-    # Optionnel : vérifier que current_user est bien propriétaire de la conversation
+    
     return service.get_messages(db, conversation_id)
 
 @router.delete("/conversations/{conversation_id}")

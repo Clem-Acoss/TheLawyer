@@ -1,3 +1,25 @@
+/**
+ * login.tsx
+ * 
+ * Composant React de la page de connexion utilisateur.
+ * 
+ * Fonctionnalités principales :
+ * - Formulaire de connexion avec saisie email et mot de passe.
+ * - Envoi des données en application/x-www-form-urlencoded à l’API d’authentification.
+ * - Décodage du token JWT reçu pour extraire l’identifiant utilisateur.
+ * - Mise à jour du contexte utilisateur avec l’état de connexion.
+ * - Redirection vers la page principale après connexion réussie.
+ * - Gestion des erreurs et affichage de messages d’alerte.
+ * 
+ * Hooks React utilisés :
+ * - useState pour la gestion des champs de formulaire et du statut de chargement.
+ * - useNavigate pour la navigation programmatique après connexion.
+ * 
+ * Auteurs : Clément Gardair
+ * Projet : PROJET-DROIT-IA-V2
+ */
+
+
 import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";

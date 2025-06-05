@@ -1,3 +1,21 @@
+/**
+ * app.css
+ * 
+ * Styles globaux de l’application React.
+ * 
+ * Contient :
+ * - Styles de la racine (#root) pour la mise en page centrée avec une largeur maximale et padding.
+ * - Styles et animations pour le logo, incluant effets de survol et rotation.
+ * - Animation cléframes définissant une rotation complète du logo.
+ * - Règles médias pour désactiver les animations selon les préférences de l’utilisateur.
+ * - Styles de la carte (.card) avec padding.
+ * - Style pour les éléments d’aide ou documentation (.read-the-docs).
+ * 
+ * Auteurs : Clément Gardair
+ * Projet : PROJET-DROIT-IA-V2
+ */
+
+
 #root {
   max-width: 1280px;
   margin: 0 auto;

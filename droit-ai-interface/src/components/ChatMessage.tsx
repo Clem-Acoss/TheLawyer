@@ -1,5 +1,21 @@
-// ChatMessage.tsx
-
+/**
+ * ChatMessage.tsx
+ * 
+ * Composant React permettant d’afficher un message dans l’interface de chat.
+ * - Affiche un style spécifique si le message provient de l’IA ou de l’utilisateur.
+ * - Affiche une animation de chargement pendant que la réponse est générée.
+ * 
+ * Props :
+ * - message (ReactNode) : contenu du message à afficher.
+ * - isAi (boolean) : indique si le message provient de l'IA (true) ou de l'utilisateur (false).
+ * - isLoading (boolean, optionnel) : affiche un effet de chargement si la réponse est en attente.
+ * 
+ * Utilise les icônes `Bot` et `MessageSquare` depuis `lucide-react`.
+ * Utilise la fonction utilitaire `cn` (lib/utils.ts) pour composer dynamiquement les classes Tailwind.
+ * 
+ * Auteur : Clement Gardair 
+ * Projet : PROJET-DROIT-IA-V2
+ */
 
 import React, { ReactNode } from 'react';
 import { MessageSquare, Bot } from 'lucide-react';

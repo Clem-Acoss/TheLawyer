@@ -1,3 +1,24 @@
+
+/**
+ * api.ts
+ *
+ * Fournit une fonction utilitaire `apiFetch` pour effectuer des appels HTTP 
+ * vers l'API backend avec gestion automatique du token JWT et des en-têtes.
+ *
+ * Fonctions principales :
+ * - `apiFetch<T>(path, options)`: appel typé à l'API, avec gestion du token et des erreurs.
+ * - `getConversations()`: raccourci pour récupérer les conversations utilisateur.
+ *
+ * Caractéristiques :
+ * - Utilise `import.meta.env.VITE_API_URL` comme base d'URL.
+ * - Supporte automatiquement les en-têtes `Authorization` et `Content-Type`.
+ * - Gère proprement les erreurs HTTP avec message personnalisé.
+ *
+ * Auteur : Clément Gardair  
+ * Projet : PROJET-DROIT-IA-V2
+ */
+
+
 const API_BASE = import.meta.env.VITE_API_URL; // ex: "http://localhost:8000"
 
 export async function apiFetch<T>(

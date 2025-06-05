@@ -1,6 +1,38 @@
 
+/**
+ * pages/index.tsx
+ * 
+ * Composant principal de l'application React - Assistant Juridique.
+ * 
+ * Fonctionnalités principales :
+ * - Gestion des conversations avec l'assistant juridique, incluant la sélection, la création, 
+ *   la suppression et l'historique des conversations.
+ * - Interface utilisateur responsive avec une sidebar pour la gestion des conversations sur grand écran 
+ *   et un panneau latéral (Sheet) pour les écrans mobiles.
+ * - Envoi de messages texte et upload de fichiers PDF en lien avec une conversation sélectionnée.
+ * - Support de deux modes d'interaction avec le backend : 
+ *    - RAG (Retrieval-Augmented Generation) pour la recherche assistée par documents.
+ *    - LLM simple pour un chatbot basé uniquement sur un modèle de langage.
+ * - Gestion de l'authentification via token JWT stocké dans le localStorage.
+ * - Scroll automatique vers le dernier message lors de l'ajout de nouveaux messages.
+ * - Utilisation de composants UI personnalisés (Button, Input, ScrollArea, DropdownMenu, etc.) 
+ *   pour une expérience utilisateur fluide et cohérente.
+ * 
+ * Types utilisés :
+ * - Conversation : identifiant, titre, date de création.
+ * - MessageFromAPI : contenu et émetteur du message.
+ * - Message : structure complète d'un message avec ID, émetteur, contenu, date.
+ * - ApiResponse : format de réponse attendu du backend, contenant un contenu texte.
+ * 
+ * Hooks React utilisés :
+ * - useState pour la gestion des états locaux (messages, input, fichiers, conversations, mode, etc.).
+ * - useEffect pour le chargement initial des conversations et le scroll automatique.
+ * - useRef pour le focus automatique sur la fin de la liste des messages.
+ * 
+ * Auteurs : Clément Gardair
+ * Projet : PROJET-DROIT-IA-V2
+ */
 
-//index.tsx
 
 import React, { useState, useEffect, useRef } from "react";
 import { Send, Menu, ChevronDown, FileText } from "lucide-react"; 

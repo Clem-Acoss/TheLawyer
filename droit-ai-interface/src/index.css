@@ -1,4 +1,23 @@
 
+/**
+ * index.css
+ * 
+ * Feuille de styles principale intégrant Tailwind CSS et définitions de variables CSS personnalisées.
+ * 
+ * Contenu :
+ * - Import de la police Inter depuis Google Fonts avec différents poids.
+ * - Inclusion des directives Tailwind : base, components, utilities.
+ * - Définition des variables CSS personnalisées (couleurs, rayons, etc.) dans la racine (:root).
+ * - Application globale des bordures par défaut à tous les éléments.
+ * - Style global du body avec fond, couleur de texte, police et fonctionnalités OpenType.
+ * - Classe utilitaire .glass pour fond semi-transparent avec effet de flou et bordure légère.
+ * - Classes utilitaires .scrollbar-hidden pour masquer la scrollbar sur différents navigateurs.
+ * 
+ * Auteurs : Clément Gardair
+ * Projet : PROJET-DROIT-IA-V2
+ */
+
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 @tailwind base;

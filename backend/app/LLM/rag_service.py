@@ -1,6 +1,3 @@
-
-
-#rag_service.py
 """
 Fichier : rag_service.py (module LLM/RAG)
 -----------------------------------------
@@ -42,7 +39,7 @@ Exemples :
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 import os
-import fitz  # PyMuPDF
+import fitz  
 import faiss
 import numpy as np
 import pytesseract
@@ -57,6 +54,8 @@ import uuid
 import shutil
 router = APIRouter()
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
+
 # === CONFIGURATION ===
 PDF_PATH = "/Users/clementgardair/AcossDev/TheLawyer/Exonération contrat d'apprentissage (1).pdf"
 DIM = 384
@@ -80,10 +79,12 @@ def extract_text_with_ocr(pdf_path):
         ocr_text += pytesseract.image_to_string(img, lang='fra') + "\n"
     return ocr_text
 
+
+
 # === INITIALISATION RAG ===
 def initialize_rag():
     if not os.path.exists(PDF_PATH):
-        print(f"[❌] PDF introuvable : {PDF_PATH}")
+        print(f"[!!] PDF introuvable : {PDF_PATH}")
         return
 
     with fitz.open(PDF_PATH) as pdf:
@@ -93,7 +94,7 @@ def initialize_rag():
         full_text = extract_text_with_ocr(PDF_PATH)
 
     if not full_text.strip():
-        print("[🚫] Texte vide après OCR.")
+        print("[!!] Texte vide après OCR.")
         return
 
     chunks = split_text(full_text)
@@ -129,6 +130,8 @@ def add_pdf_to_rag(pdf_path: str):
 
     print(f"[✔️] PDF indexé avec {len(chunks)} chunks.")
 
+
+
 # === ROUTE MODIFIÉE ===
 @router.post("/ask", response_model=MessageOut)
 def ask_rag(
@@ -142,7 +145,7 @@ def ask_rag(
     if index.ntotal == 0:
         raise HTTPException(status_code=500, detail="Index vectoriel vide.")
 
-    # 👉 1. Enregistrer le message de l'utilisateur dans la base
+    
     user_message_data = MessageCreate(
         conversation_id=conversation_id,
         sender="user",
@@ -151,7 +154,7 @@ def ask_rag(
     )
     crud.create_message(db=db, message_data=user_message_data)
 
-    # 👉 2. Construire le prompt pour le RAG
+   
     question_vector = embedder.encode([question])[0].astype("float32")
     _, I = index.search(np.array([question_vector]), k=5)
     top_chunks = [chunks_list[i] for i in I[0] if i < len(chunks_list)]
@@ -163,7 +166,7 @@ def ask_rag(
 Question : {question}
 Réponse :"""
 
-    # 👉 3. Appeler le modèle
+   
     try:
         res = requests.post(
             "http://localhost:11434/api/generate",
@@ -175,7 +178,7 @@ Réponse :"""
     except requests.RequestException as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-    # 👉 4. Enregistrer la réponse IA
+    
     ai_message_data = MessageCreate(
         conversation_id=conversation_id,
         sender="assistant",
@@ -184,7 +187,7 @@ Réponse :"""
     )
     ai_message = crud.create_message(db=db, message_data=ai_message_data)
 
-    # 👉 5. Retourner la réponse IA (tu pourrais aussi retourner les 2 si besoin)
+    
     return ai_message
 @router.post("/ask-with-pdf", response_model=MessageOut)
 async def ask_with_pdf(
@@ -194,24 +197,24 @@ async def ask_with_pdf(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    # 1. Vérif type PDF
+   
     if file.content_type != "application/pdf":
         raise HTTPException(status_code=400, detail="Seuls les fichiers PDF sont acceptés.")
     
-    # 2. Sauvegarde temporaire
+
     tmp_dir = "/tmp/uploads"
     os.makedirs(tmp_dir, exist_ok=True)
     tmp_path = os.path.join(tmp_dir, f"{uuid.uuid4()}.pdf")
     with open(tmp_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    # 3. Indexe le PDF dans FAISS + chunks_list
+    
     try:
         add_pdf_to_rag(tmp_path)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur lors de l'indexation PDF: {str(e)}")
 
-    # 4. Enregistre message utilisateur en base
+    
     user_message_data = MessageCreate(
         conversation_id=conversation_id,
         sender="user",
@@ -220,7 +223,7 @@ async def ask_with_pdf(
     )
     crud.create_message(db=db, message_data=user_message_data)
 
-    # 5. Recherche RAG (copie de la logique ask_rag)
+    
     if index.ntotal == 0:
         raise HTTPException(status_code=500, detail="Index vectoriel vide.")
 
@@ -246,7 +249,7 @@ Réponse :"""
     except requests.RequestException as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-    # 6. Enregistre réponse IA
+   
     ai_message_data = MessageCreate(
         conversation_id=conversation_id,
         sender="assistant",
@@ -255,5 +258,5 @@ Réponse :"""
     )
     ai_message = crud.create_message(db=db, message_data=ai_message_data)
 
-    # 7. Retourne réponse IA
+    
     return ai_message

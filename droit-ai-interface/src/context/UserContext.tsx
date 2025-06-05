@@ -1,4 +1,23 @@
-// src/context/UserContext.tsx
+/**
+ * UserContext.tsx
+ * 
+ * Fournit un contexte React global pour la gestion de l'utilisateur connecté.
+ * - Stocke le `userId` extrait du token JWT dans le state React.
+ * - Fournit des fonctions de `login` (stocke le token + ID utilisateur) et `logout` (nettoyage).
+ * - Permet un accès au contexte via le hook `useUser`.
+ * 
+ * Détails :
+ * - Le token est stocké dans le `localStorage` pour persistance entre sessions.
+ * - Le `userId` est décodé depuis la charge utile (payload) du JWT.
+ * - Le hook `useUser` jette une erreur si utilisé hors du `UserProvider`.
+ * 
+ * Types :
+ * - `UserContextType` définit les types des données et méthodes exposées dans le contexte.
+ * 
+ * Auteur : Clément Gardair  
+ * Projet : PROJET-DROIT-IA-V2
+ */
+
 import React, { createContext, useContext, useState, ReactNode } from "react";
 
 type UserContextType = {

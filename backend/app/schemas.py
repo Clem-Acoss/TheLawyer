@@ -60,7 +60,7 @@ class MessageCreate(BaseModel):
     conversation_id: int
     sender: str
     content: str
-    is_ai: bool = False  # facultatif, par défaut False
+    is_ai: bool = False  
 
 class MessageOut(BaseModel):
     id: int

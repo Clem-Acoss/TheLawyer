@@ -1,4 +1,22 @@
-// App.tsx
+/**
+ * App.tsx
+ * 
+ * Composant racine principal de l’application React.
+ * 
+ * Fonctionnalités principales :
+ * - Configuration du provider React Query pour la gestion des requêtes asynchrones.
+ * - Fourniture du contexte utilisateur global via UserProvider.
+ * - Intégration de composants UI globaux : Toaster pour notifications, TooltipProvider pour infobulles.
+ * - Configuration du routage avec react-router-dom :
+ *    - Route "/" vers la page d'inscription.
+ *    - Route "/login" vers la page de connexion.
+ *    - Route "/Index" vers la page principale après authentification.
+ *    - Route "*" pour la gestion des pages non trouvées (404).
+ * 
+ * Auteurs : Clément Gardair
+ * Projet : PROJET-DROIT-IA-V2
+ */
+
 import { UserProvider } from "@/context/UserContext";  // Import du contexte utilisateur
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";

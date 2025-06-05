@@ -1,3 +1,30 @@
+
+/**
+ * ConversationHistory.tsx
+ * 
+ * Composant React affichant l'historique des conversations dans la barre latérale.
+ * - Permet de sélectionner une conversation existante via un bouton stylisé.
+ * - Permet de supprimer une conversation avec une icône de corbeille.
+ * - Met en surbrillance la conversation actuellement sélectionnée.
+ * 
+ * Props :
+ * - conversations (Array<{ title: string, date: string }>) : liste des titres et dates des conversations.
+ * - onSelect (function) : fonction appelée lors de la sélection d'une conversation.
+ * - onDelete (function) : fonction appelée lors de la suppression d'une conversation.
+ * - selectedTitle (string, optionnel) : titre de la conversation actuellement active.
+ * 
+ * Utilise :
+ * - Icônes `MessageSquare` et `Trash2` depuis `lucide-react`.
+ * - Composants UI personnalisés `Button` et `ScrollArea`.
+ * 
+ * Auteur : Clément Gardair
+ * Projet : PROJET-DROIT-IA-V2
+ */
+
+
+
+
+
 import { MessageSquare, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';

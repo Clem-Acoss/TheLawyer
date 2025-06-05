@@ -42,13 +42,13 @@ app = FastAPI()
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8080"],  # frontend
+    allow_origins=["http://localhost:8080"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Lancement vectorisation PDF à démarrage
+
 
 # Routers
 app.include_router(rag_service.router, prefix="/rag", tags=["RAG"])

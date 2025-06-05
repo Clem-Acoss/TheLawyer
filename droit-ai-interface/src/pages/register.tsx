@@ -1,4 +1,21 @@
-// src/pages/Register.tsx
+/**
+ * src/pages/Register.tsx
+ * 
+ * Composant React de la page d'inscription utilisateur.
+ * 
+ * Fonctionnalités principales :
+ * - Formulaire d'inscription avec saisie email et mot de passe.
+ * - Envoi des données JSON à l’API d’enregistrement utilisateur.
+ * - Navigation vers la page de connexion après inscription réussie.
+ * - Gestion des erreurs et affichage de messages d’alerte.
+ * 
+ * Hooks React utilisés :
+ * - useState pour la gestion des champs de formulaire et du statut de chargement.
+ * - useNavigate pour la navigation programmatique après inscription.
+ * 
+ * Auteurs : Clément Gardair
+ * Projet : PROJET-DROIT-IA-V2
+ */
 import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";

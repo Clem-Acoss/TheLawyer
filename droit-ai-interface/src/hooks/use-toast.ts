@@ -1,4 +1,22 @@
-//droit-ai-interface/src/hooks/use-toast.ts
+/**
+ * use-toast.ts
+ * 
+ * Hook et gestionnaire centralisé pour l'affichage de toasts personnalisés.
+ * 
+ * Fonctions principales :
+ * - `useToast()`: hook React pour consommer l’état global des toasts.
+ * - `toast({...})`: fonction utilitaire pour afficher un nouveau toast.
+ * - Système de file d’attente avec limite et timeout de suppression.
+ * - Supporte l’ajout, la mise à jour, la fermeture et la suppression des toasts.
+ * 
+ * Caractéristiques :
+ * - Utilise une logique de reducer pour la gestion des actions.
+ * - Mémorisation dans un `memoryState` partagé.
+ * - Délai de suppression configurable (par défaut très long).
+ * 
+ * Auteur : Clément Gardair  
+ * Projet : PROJET-DROIT-IA-V2
+ */
 
 
 import * as React from "react"
