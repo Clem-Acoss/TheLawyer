@@ -1,27 +1,94 @@
-\c baseTheLawyer
-CREATE DATABASE
-You are now connected to database "baseTheLawyer" as user "clementgardair".
-baseTheLawyer=# CREATE TABLE users (
-    id SERIAL PRIMARY KEY,
-    email TEXT UNIQUE NOT NULL,
-    hashed_password TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-CREATE TABLE
-baseTheLawyer=# CREATE TABLE conversations (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-    title TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-CREATE TABLE
-baseTheLawyer=# CREATE TABLE messages (
-    id SERIAL PRIMARY KEY,
-    conversation_id INTEGER REFERENCES conversations(id) ON DELETE CASCADE,
-    sender TEXT CHECK (sender IN ('user', 'assistant')) NOT NULL,
-    content TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-ALTER TABLE messages
-ADD COLUMN is_ai BOOLEAN NOT NULL DEFAULT FALSE;
-ALTER TABLE
+ARCHITECTURE DE LA BASE DE DONNÉES : baseTheLawyer
+===================================================
+
+Ce fichier décrit la structure actuelle des tables utilisées dans le projet.
+Chaque table est accompagnée d’explications sur les colonnes, types de données
+et valeurs par défaut.
+
+───────────────────────────────────────────────────────────────
+1. Table : users
+───────────────────────────────────────────────────────────────
+Contient les informations d'authentification des utilisateurs.
+
+- id               : integer, NOT NULL  
+  ➤ Clé primaire auto-incrémentée  
+  ➤ Défaut : nextval('users_id_seq')
+
+- email            : text, NOT NULL  
+  ➤ Adresse email de l’utilisateur
+
+- hashed_password  : text, NOT NULL  
+  ➤ Mot de passe haché pour la sécurité
+
+- created_at       : timestamp, NULLABLE  
+  ➤ Date de création  
+  ➤ Défaut : CURRENT_TIMESTAMP
+
+
+
+
+───────────────────────────────────────────────────────────────
+2. Table : conversations
+───────────────────────────────────────────────────────────────
+Stocke les sessions de discussions appartenant aux utilisateurs.
+
+- id               : integer, NOT NULL  
+  ➤ Clé primaire auto-incrémentée  
+  ➤ Défaut : nextval('conversations_id_seq')
+
+- user_id          : integer, NULLABLE  
+  ➤ Référence vers `users.id`
+
+- title            : text, NULLABLE  
+  ➤ Titre de la conversation
+
+- created_at       : timestamp, NULLABLE  
+  ➤ Date de création  
+  ➤ Défaut : CURRENT_TIMESTAMP
+
+
+───────────────────────────────────────────────────────────────
+3. Table : messages
+───────────────────────────────────────────────────────────────
+Contient tous les messages échangés dans les conversations.
+
+- id               : integer, NOT NULL  
+  ➤ Clé primaire auto-incrémentée  
+  ➤ Défaut : nextval('messages_id_seq')
+
+- conversation_id  : integer, NULLABLE  
+  ➤ Référence vers `conversations.id`
+
+- sender           : text, NOT NULL  
+  ➤ Indique l’expéditeur : "user", "assistant", etc.
+
+- content          : text, NOT NULL  
+  ➤ Texte du message
+
+
+───────────────────────────────────────────────────────────────
+4. Table : documentation
+───────────────────────────────────────────────────────────────
+Contient les documents vectorisés pour le RAG (Retrieval-Augmented Generation).
+
+- id               : integer, NOT NULL  
+  ➤ Clé primaire auto-incrémentée  
+  ➤ Défaut : nextval('documentation_id_seq')
+
+- title            : text, NOT NULL  
+  ➤ Titre du document
+
+- content          : text, NOT NULL  
+  ➤ Contenu du document
+
+- source           : varchar, NULLABLE  
+  ➤ Provenance ou nom du fichier
+
+- created_at       : timestamp, NULLABLE  
+  ➤ Date d’insertion  
+  ➤ Défaut : now()
+
+- updated_at       : timestamp, NULLABLE  
+  ➤ Date de dernière modification  
+  ➤ Défaut : now()
+
