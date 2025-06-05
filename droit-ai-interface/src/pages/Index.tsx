@@ -147,60 +147,113 @@ const Index = () => {
 
   const handleSend = async () => {
     if (!input.trim() && files.length === 0) return;
-    
+
     if (selectedConvId === null) {
       alert("Veuillez sélectionner une conversation ou en créer une nouvelle.");
       return;
     }
-  
+
     const userMessage = input.trim();
     setInput("");
     setIsLoading(true);
-  
+
     if (userMessage) {
       setMessages((prev) => [...prev, { text: userMessage, isAi: false }]);
     }
-  
+
     try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Vous devez être connecté.");
+        setIsLoading(false);
+        return;
+      }
+
       if (files.length > 0) {
+        // Cas avec PDF à envoyer (uniquement en mode RAG)
+        if (mode !== "rag") {
+          alert("L'envoi de fichiers PDF n'est disponible qu'en mode RAG.");
+          setIsLoading(false);
+          return;
+        }
+
         console.log("Envoi de fichier(s) PDF...");
         const formData = new FormData();
         formData.append("conversation_id", String(selectedConvId));
         formData.append("question", userMessage || "");
         formData.append("file", files[0]);
-      
-        // Récupérer token JWT
-        const token = localStorage.getItem("token");
-        if (!token) {
-          alert("Vous devez être connecté.");
-          setIsLoading(false);
-          return;
-        }
-      
+
         const response = await fetch("/rag/ask-with-pdf", {
           method: "POST",
           body: formData,
           headers: {
-            "Authorization": `Bearer ${token}`,  // <-- Ajouter ici le header d’authentification
-            // NOTE: Ne PAS mettre Content-Type ici car fetch avec FormData le gère automatiquement
+            Authorization: `Bearer ${token}`,
+            // Ne PAS ajouter Content-Type pour FormData
           },
         });
-      
+
         if (!response.ok) throw new Error("Erreur lors de l'envoi du PDF.");
-      
+
         const data: ApiResponse = await response.json();
-      
+
         setMessages((prev) => [
           ...prev,
           { text: data.content || data.response || "Réponse reçue.", isAi: true },
         ]);
         setFiles([]);
       } else {
-        // Ton code actuel pour le cas sans fichier
-        // (probablement déjà gère l'Authorization ailleurs)
+        // Cas sans fichier
+        if (mode === "rag") {
+          // RAG sans fichier : on utilise ton endpoint RAG classique (ex: /rag/ask)
+          const response = await fetch("/rag/ask", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              conversation_id: selectedConvId,
+              question: userMessage,
+            }),
+          });
+
+          if (!response.ok) throw new Error("Erreur lors de la requête RAG.");
+
+          const data: ApiResponse = await response.json();
+
+          setMessages((prev) => [
+            ...prev,
+            { text: data.content || data.response || "Réponse reçue.", isAi: true },
+          ]);
+        } else {
+          // Mode LLM simple
+          const response = await fetch("/chat/send-message-llm", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+            conversation_id: selectedConvId,
+            sender: "user",         
+            content: userMessage,   
+          })
+
+          });
+
+          if (!response.ok) throw new Error("Erreur lors de la requête LLM.");
+
+          const data: ApiResponse = await response.json();
+
+          setMessages((prev) => [
+            ...prev,
+            { text: data.content || data.response || "Réponse reçue.", isAi: true },
+          ]);
+        }
       }
     } catch (e) {
       console.error(e);
+      alert(`Erreur: ${(e as Error).message}`);
     } finally {
       setIsLoading(false);
     }

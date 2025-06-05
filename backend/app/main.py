@@ -23,9 +23,9 @@ Remarques :
 """
 
 
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 
 from app.auth.routes import router as auth_router
 from app.chat.routes import router as chat_router
@@ -36,8 +36,15 @@ from app.database import Base, engine
 # Création des tables
 Base.metadata.create_all(bind=engine)
 
-# Création de l'app FastAPI
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Initialisation RAG au démarrage
+    rag_service.initialize_rag()
+    yield
+    # Ici tu peux ajouter un code à exécuter au shutdown si besoin
+
+# Création de l'app FastAPI avec gestion du lifespan
+app = FastAPI(lifespan=lifespan)
 
 # CORS
 app.add_middleware(
@@ -48,11 +55,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-
-# Routers
+# Inclusion des routers
 app.include_router(rag_service.router, prefix="/rag", tags=["RAG"])
 app.include_router(auth_router)
 app.include_router(chat_router)
 app.include_router(llm_routes.router)
-

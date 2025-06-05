@@ -103,10 +103,8 @@ def initialize_rag():
     for chunk, vector in zip(chunks, embeddings):
         index.add(np.array([vector], dtype='float32'))
         chunks_list.append(chunk)
-
-@router.on_event("startup")
-def startup_event():
-    initialize_rag()
+    print(f"[INFO] Nombre de chunks indexés : {len(chunks_list)}")
+    print(f"[INFO] Taille index FAISS : {index.ntotal}")
 
 def add_pdf_to_rag(pdf_path: str):
     if not os.path.exists(pdf_path):
@@ -128,7 +126,7 @@ def add_pdf_to_rag(pdf_path: str):
         index.add(np.array([vector], dtype='float32'))
         chunks_list.append(chunk)
 
-    print(f"[✔️] PDF indexé avec {len(chunks)} chunks.")
+    print(f"[!!] PDF indexé avec {len(chunks)} chunks.")
 
 
 

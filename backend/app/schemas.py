@@ -28,6 +28,7 @@ Remarques :
 from pydantic import BaseModel, EmailStr
 from typing import List, Optional
 from datetime import datetime
+from pydantic import ConfigDict
 
 class UserCreate(BaseModel):
     email: EmailStr
@@ -38,8 +39,7 @@ class UserOut(BaseModel):
     email: EmailStr
     created_at: datetime
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 class Token(BaseModel):
     access_token: str
@@ -53,8 +53,7 @@ class ConversationOut(BaseModel):
     title: str
     created_at: datetime
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 class MessageCreate(BaseModel):
     conversation_id: int
@@ -69,8 +68,7 @@ class MessageOut(BaseModel):
     created_at: datetime
     is_ai: bool
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
         
 class MessageRequest(BaseModel):
     conversation_id: int

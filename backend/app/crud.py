@@ -106,4 +106,4 @@ def create_message(db: Session, message_data: MessageCreate) -> Message:
 
 
 def get_messages_by_conversation(db: Session, conversation_id: int) -> List[Message]:
-    return db.query(Message).filter(Message.conversation_id == conversation_id).order_by(Message.timestamp.asc()).all()
+    return db.query(Message).filter(Message.conversation_id == conversation_id).order_by(Message.created_at.asc()).all()
