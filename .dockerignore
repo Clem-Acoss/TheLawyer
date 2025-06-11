@@ -1,0 +1,19 @@
+# Ignorer node_modules dans frontend
+droit-ai-interface/node_modules
+droit-ai-interface/dist
+
+# Ignorer les fichiers de logs, caches, et environnements locaux
+*.log
+*.pyc
+__pycache__
+.env
+.vscode/
+.idea/
+
+# Ignorer dossiers Python virtuels
+backend/venv
+backend/__pycache__
+
+# Ignorer Dockerfile et docker-compose qui sont déjà dans le contexte
+Dockerfile
+docker-compose.yml

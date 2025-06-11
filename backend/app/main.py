@@ -1,4 +1,3 @@
-
 """
 Fichier : main.py
 -----------------
@@ -22,10 +21,12 @@ Remarques :
 - Le backend supporte plusieurs modules fonctionnels (auth, chat, LLM, RAG) de manière modulaire
 """
 
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+import os
 
 from app.auth.routes import router as auth_router
 from app.chat.routes import router as chat_router
@@ -41,15 +42,19 @@ async def lifespan(app: FastAPI):
     # Initialisation RAG au démarrage
     rag_service.initialize_rag()
     yield
-    # Ici tu peux ajouter un code à exécuter au shutdown si besoin
+    # Code au shutdown si besoin
 
-# Création de l'app FastAPI avec gestion du lifespan
 app = FastAPI(lifespan=lifespan)
 
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8080"], 
+    allow_origins=[
+    "http://localhost:8000",
+    "http://localhost:8080",
+    "http://0.0.0.0:8000",
+    "http://0.0.0.0:8080"
+    ], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -60,3 +65,17 @@ app.include_router(rag_service.router, prefix="/rag", tags=["RAG"])
 app.include_router(auth_router)
 app.include_router(chat_router)
 app.include_router(llm_routes.router)
+
+# Chemin vers le dossier static où le frontend compilé est copié dans le Docker backend
+frontend_dist_path = os.path.join(os.path.dirname(__file__), "static")
+
+# Servir les fichiers statiques du frontend compilé
+app.mount("/", StaticFiles(directory=frontend_dist_path, html=True), name="static_root")
+
+# Route catch-all pour le frontend (React)
+@app.get("/{full_path:path}")
+async def serve_frontend(full_path: str):
+    index_path = os.path.join(frontend_dist_path, "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    return {"message": "Frontend non trouvé"}
