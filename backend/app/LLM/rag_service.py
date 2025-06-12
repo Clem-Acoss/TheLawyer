@@ -166,13 +166,20 @@ Réponse :"""
 
    
     try:
-        res = requests.post(
-            "http://localhost:11434/api/generate",
-            json={"model": "llama3.2", "prompt": prompt, "stream": False},
-            timeout=60
-        )
+        headers = {
+            "Authorization": "Bearer xxxxxxxxxxxxxxxx", #mettre son api key 
+            "Content-Type": "application/json"
+        }
+        url = "https://llama3370b.urssaf.cloud-acoss.fr/v1/chat/completions"
+        data = {
+            "model": "Infermatic/Llama-3.3-70B-Instruct-FP8-Dynamic",
+            "messages": [{"role": "user", "content": prompt}]
+        }
+
+        res = requests.post(url, headers=headers, json=data, verify=False, timeout=60)
         res.raise_for_status()
-        response = res.json().get("response", "[Réponse vide]")
+        response = res.json()["choices"][0]["message"]["content"]
+
     except requests.RequestException as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -237,13 +244,19 @@ Question : {question}
 Réponse :"""
 
     try:
-        res = requests.post(
-            "http://localhost:11434/api/generate",
-            json={"model": "llama3.2", "prompt": prompt, "stream": False},
-            timeout=60
-        )
+        headers = {
+            "Authorization": "Bearer xxxxxxxxxxxxxxxxxxx", #mettre son api key 
+            "Content-Type": "application/json"
+        }
+        url = "https://llama3370b.urssaf.cloud-acoss.fr/v1/chat/completions"
+        data = {
+            "model": "Infermatic/Llama-3.3-70B-Instruct-FP8-Dynamic",
+            "messages": [{"role": "user", "content": prompt}]
+        }
+        res = requests.post(url, headers=headers, json=data, verify=False, timeout=60)
         res.raise_for_status()
-        response = res.json().get("response", "[Réponse vide]")
+        response = res.json()["choices"][0]["message"]["content"]
+
     except requests.RequestException as e:
         raise HTTPException(status_code=500, detail=str(e))
 

@@ -49,7 +49,6 @@ def send_message_llm(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-   
     user_message_data = MessageCreate(
         conversation_id=request.conversation_id,
         sender=request.sender,
@@ -58,25 +57,31 @@ def send_message_llm(
     )
     user_message = crud.create_message(db=db, message_data=user_message_data)
 
-   
+    # Configuration API distante
+    api_key = "xxxxxxxxxxx" #mettre son api key 
+    url = "https://llama3370b.urssaf.cloud-acoss.fr/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "model": "Infermatic/Llama-3.3-70B-Instruct-FP8-Dynamic",
+        "messages": [{"role": "user", "content": request.content}],
+        # Optionnel : ajouter temperature / max_tokens / top_p si besoin
+    }
+
     try:
-        response = requests.post(
-            "http://localhost:11434/api/generate",
-            json={
-                "model": "llama3.2",
-                "prompt": request.content,
-                "stream": False
-            },
-            timeout=30
-        )
+        response = requests.post(url, headers=headers, json=payload, timeout=60, verify=False)
         response.raise_for_status()
     except requests.exceptions.RequestException as e:
-        raise RuntimeError(f"Erreur de connexion au modèle local : {e}")
+        raise RuntimeError(f"Erreur de connexion à l'API distante : {e}")
 
-    result = response.json()
-    ai_response = result.get("response", "[Réponse vide]")
+    try:
+        result = response.json()
+        ai_response = result["choices"][0]["message"]["content"]
+    except (KeyError, ValueError, IndexError) as e:
+        raise RuntimeError(f"Erreur dans la réponse du modèle : {e}")
 
-    
     ai_message_data = MessageCreate(
         conversation_id=request.conversation_id,
         sender="assistant",
