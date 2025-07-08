@@ -59,7 +59,9 @@ import { ConversationHistory } from "@/components/ConversationHistory";
 import { useUser } from "@/context/UserContext";
 import { apiFetch } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
-
+import { useNavigate } from "react-router-dom";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { NewConversationDialog } from "@/components/NewConversationDialog";
 type Conversation = {
   id: number;
   title: string;
@@ -260,8 +262,12 @@ const Index = () => {
   };
 
 
-  const startNewConversation = async () => {
-    const title = prompt("Entrez le titre de la conversation :") || "Nouvelle conversation";
+  const startNewConversation = () => {
+  setNewConvDialogOpen(true);
+  };
+
+  const handleNewConversation = async (title: string) => {
+    setNewConvDialogOpen(false);
     try {
       const conv = await apiFetch<Conversation>("/chat/conversation", {
         method: "POST",
@@ -275,31 +281,52 @@ const Index = () => {
     }
   };
 
-  const handleDeleteConversation = async (title: string) => {
+  
+  const handleDeleteConversation = (title: string) => {
     const conv = conversations.find((c) => c.title === title);
     if (!conv) return;
 
-    if (!confirm(`Supprimer la conversation "${title}" ?`)) return;
-
-    try {
-      await apiFetch(`/chat/conversations/${conv.id}`, { method: "DELETE" });
-      setConversations((prev) => prev.filter((c) => c.id !== conv.id));
-
-      if (selectedConvId === conv.id) {
-        setSelectedConvId(null);
-        setSelectedTitle(undefined);
-        setMessages([
-          {
-            text: "Bonjour, je suis votre assistant juridique. Comment puis-je vous aider aujourd'hui ?",
-            isAi: true,
-          },
-        ]);
-        localStorage.removeItem("convTitle");
+    setConfirmCallback(() => async () => {
+      try {
+        await apiFetch(`/chat/conversations/${conv.id}`, { method: "DELETE" });
+        setConversations((prev) => prev.filter((c) => c.id !== conv.id));
+        if (selectedConvId === conv.id) {
+          setSelectedConvId(null);
+          setSelectedTitle(undefined);
+          setMessages([
+            {
+              text: "Bonjour, je suis votre assistant juridique. Comment puis-je vous aider aujourd'hui ?",
+              isAi: true,
+            },
+          ]);
+          localStorage.removeItem("convTitle");
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setShowConfirm(false);
       }
-    } catch (e) {
-      console.error(e);
-    }
+    });
+
+    setShowConfirm(true);
   };
+
+
+
+  const handleSettings = () => {
+    console.log("Ouverture des paramètres");
+    
+  };
+
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout(); 
+    navigate("/login"); 
+  };
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [confirmCallback, setConfirmCallback] = useState<() => void>(() => {});
+  const [newConvDialogOpen, setNewConvDialogOpen] = useState(false);
 
   return (
     <div className="flex h-screen bg-background">
@@ -309,10 +336,12 @@ const Index = () => {
           Nouvelle conversation
         </Button>
         <ConversationHistory
-          conversations={convForHistory}
-          onSelect={handleSelectConversation}
-          onDelete={handleDeleteConversation}
-          selectedTitle={selectedTitle}
+           conversations={convForHistory}
+           selectedTitle={selectedTitle}
+           onSelect={handleSelectConversation}
+           onDelete={handleDeleteConversation}
+           onSettings={handleSettings}    
+           onLogout={handleLogout} 
         />
         {conversations.length === 0 && <p>Aucune conversation disponible</p>}
       </aside>
@@ -337,10 +366,14 @@ const Index = () => {
                   Nouvelle conversation
                 </Button>
                 <ConversationHistory
-                  conversations={convForHistory}
-                  onSelect={handleSelectConversation}
-                  onDelete={handleDeleteConversation}
-                  selectedTitle={selectedTitle}
+
+                   conversations={convForHistory}
+                   selectedTitle={selectedTitle}
+                   onSelect={handleSelectConversation}
+                   onDelete={handleDeleteConversation}
+                   onSettings={handleSettings}    
+                   onLogout={handleLogout}    
+
                 />
               </div>
             </SheetContent>
@@ -431,6 +464,20 @@ const Index = () => {
           </div>
         </div>
       </main>
+      <NewConversationDialog
+         open={newConvDialogOpen}
+         onOpenChange={setNewConvDialogOpen}
+         onCreate={handleNewConversation}
+      />
+      <ConfirmDialog
+        open={showConfirm}
+        title="Supprimer la conversation"
+        description="Voulez-vous vraiment supprimer cette conversation ?"
+        onConfirm={() => {
+          if (confirmCallback) confirmCallback();
+        }}
+        onCancel={() => setShowConfirm(false)}
+      />
     </div>
   );
 };
