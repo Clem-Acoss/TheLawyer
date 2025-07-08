@@ -44,28 +44,35 @@ import faiss
 import numpy as np
 import pytesseract
 from pdf2image import convert_from_path
-from sentence_transformers import SentenceTransformer
+from app.LLM.embedding_service import get_embeddings
 import requests
 from fastapi import UploadFile, File, Form
 from app.schemas import QuestionRequest, MessageOut, MessageCreate
 from app.auth.deps import get_db, get_current_user
 from app import crud, models
+from dotenv import load_dotenv
 import uuid
 import shutil
 router = APIRouter()
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
+load_dotenv()  # charge le fichier .env dans os.environ
 
+DATABASE_URL = os.getenv("DATABASE_URL")
+EMBEDDING_API_URL = os.getenv("EMBEDDING_API_URL")
+EMBEDDING_API_TOKEN = os.getenv("EMBEDDING_API_TOKEN")
+LLM_API_KEY = os.getenv("LLM_API_KEY")
+LLM_API_URL = os.getenv("LLM_API_URL")
+LLM_MODEL = os.getenv("LLM_MODEL")
 
 # === CONFIGURATION ===
-PDF_PATH = "/Users/clementgardair/AcossDev/TheLawyer/Exonération contrat d'apprentissage (1).pdf"
+PDF_PATH = "/app/exo.pdf"
 DIM = 384
-embedder = SentenceTransformer("all-MiniLM-L6-v2")
 index = faiss.IndexFlatL2(DIM)
 chunks_list = []
 
 
 # === UTILS ===
-def split_text(text, chunk_size=300, overlap=30):
+def split_text(text, chunk_size=200, overlap=30):
     words = text.split()
     return [
         " ".join(words[i:i + chunk_size])
@@ -83,6 +90,8 @@ def extract_text_with_ocr(pdf_path):
 
 # === INITIALISATION RAG ===
 def initialize_rag():
+    global index, chunks_list
+
     if not os.path.exists(PDF_PATH):
         print(f"[!!] PDF introuvable : {PDF_PATH}")
         return
@@ -98,13 +107,25 @@ def initialize_rag():
         return
 
     chunks = split_text(full_text)
-    embeddings = embedder.encode(chunks, show_progress_bar=True)
+    embeddings = get_embeddings(chunks)
+
+    # Correction ici : vérifier si la liste embeddings est vide
+    if len(embeddings) == 0:
+        print("[!!] Aucun embedding généré.")
+        return
+
+    # Initialisation de l'index avec la bonne dimension
+    dimension = len(embeddings[0])
+    index = faiss.IndexFlatL2(dimension)
 
     for chunk, vector in zip(chunks, embeddings):
         index.add(np.array([vector], dtype='float32'))
         chunks_list.append(chunk)
+
     print(f"[INFO] Nombre de chunks indexés : {len(chunks_list)}")
     print(f"[INFO] Taille index FAISS : {index.ntotal}")
+
+
 
 def add_pdf_to_rag(pdf_path: str):
     if not os.path.exists(pdf_path):
@@ -120,7 +141,7 @@ def add_pdf_to_rag(pdf_path: str):
         raise ValueError("Texte vide après OCR.")
 
     chunks = split_text(full_text)
-    embeddings = embedder.encode(chunks, show_progress_bar=True)
+    embeddings = get_embeddings(chunks)
 
     for chunk, vector in zip(chunks, embeddings):
         index.add(np.array([vector], dtype='float32'))
@@ -153,7 +174,7 @@ def ask_rag(
     crud.create_message(db=db, message_data=user_message_data)
 
    
-    question_vector = embedder.encode([question])[0].astype("float32")
+    question_vector = get_embeddings([question])[0]
     _, I = index.search(np.array([question_vector]), k=5)
     top_chunks = [chunks_list[i] for i in I[0] if i < len(chunks_list)]
     context = "\n\n".join(top_chunks)
@@ -167,12 +188,12 @@ Réponse :"""
    
     try:
         headers = {
-            "Authorization": "Bearer xxxxxxxxxxxxxxxx", #mettre son api key 
+            "Authorization": f"Bearer {LLM_API_KEY}", #mettre son api key 
             "Content-Type": "application/json"
         }
-        url = "https://llama3370b.urssaf.cloud-acoss.fr/v1/chat/completions"
+        url = LLM_API_URL
         data = {
-            "model": "Infermatic/Llama-3.3-70B-Instruct-FP8-Dynamic",
+            "model": LLM_MODEL,
             "messages": [{"role": "user", "content": prompt}]
         }
 
@@ -232,7 +253,7 @@ async def ask_with_pdf(
     if index.ntotal == 0:
         raise HTTPException(status_code=500, detail="Index vectoriel vide.")
 
-    question_vector = embedder.encode([question])[0].astype("float32")
+    question_vector = get_embeddings([question])[0]
     _, I = index.search(np.array([question_vector]), k=5)
     top_chunks = [chunks_list[i] for i in I[0] if i < len(chunks_list)]
     context = "\n\n".join(top_chunks)
@@ -245,12 +266,12 @@ Réponse :"""
 
     try:
         headers = {
-            "Authorization": "Bearer xxxxxxxxxxxxxxxxxxx", #mettre son api key 
+            "Authorization": f"Bearer {LLM_API_KEY}", #mettre son api key 
             "Content-Type": "application/json"
         }
-        url = "https://llama3370b.urssaf.cloud-acoss.fr/v1/chat/completions"
+        url = LLM_API_URL
         data = {
-            "model": "Infermatic/Llama-3.3-70B-Instruct-FP8-Dynamic",
+            "model": LLM_MODEL,
             "messages": [{"role": "user", "content": prompt}]
         }
         res = requests.post(url, headers=headers, json=data, verify=False, timeout=60)

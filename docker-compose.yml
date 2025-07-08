@@ -12,6 +12,13 @@ services:
       - .env
     depends_on:
       - db
+    dns:
+      - 172.19.32.1  
+    environment:
+      http_proxy: "http://proxy-web.service.cnp.cs.recouv:3128"
+      https_proxy: "http://proxy-web.service.cnp.cs.recouv:3128"
+      HTTP_PROXY: "http://proxy-web.service.cnp.cs.recouv:3128"
+      HTTPS_PROXY: "http://proxy-web.service.cnp.cs.recouv:3128"
 
   db:
     image: postgres:16

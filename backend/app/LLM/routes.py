@@ -57,15 +57,18 @@ def send_message_llm(
     )
     user_message = crud.create_message(db=db, message_data=user_message_data)
 
-    # Configuration API distante
-    api_key = "xxxxxxxxxxx" #mettre son api key 
-    url = "https://llama3370b.urssaf.cloud-acoss.fr/v1/chat/completions"
+    # Configuration API distante via variables d'environnement
+    api_key = os.getenv("LLM_API_KEY")
+    url = os.getenv("LLM_API_URL")
+    model = os.getenv("LLM_MODEL")
+
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json"
     }
+
     payload = {
-        "model": "Infermatic/Llama-3.3-70B-Instruct-FP8-Dynamic",
+        "model": model,
         "messages": [{"role": "user", "content": request.content}],
         # Optionnel : ajouter temperature / max_tokens / top_p si besoin
     }

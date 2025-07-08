@@ -18,8 +18,14 @@
  */
 
 import React, { ReactNode } from 'react';
-import { MessageSquare, Bot } from 'lucide-react';
+import { MessageSquare, Bot, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 
 interface ChatMessageProps {
   message: ReactNode;
@@ -39,11 +45,33 @@ export const ChatMessage = ({ message, isAi, isLoading }: ChatMessageProps) => {
       )}>
         {isAi ? <Bot size={20} /> : <MessageSquare size={20} />}
       </div>
-      <div className="flex-1">
-        {isLoading ? (
-          <div className="h-4 w-12 animate-pulse bg-muted rounded" />
-        ) : (
-          <div className="text-sm leading-relaxed">{message}</div>
+      <div className="flex-1 flex justify-between items-start">
+        <div className="text-sm leading-relaxed">
+          {isLoading ? (
+            <div className="h-4 w-12 animate-pulse bg-muted rounded" />
+          ) : (
+            <div>{message}</div>
+          )}
+        </div>
+        {isAi && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="ml-2">
+                <ChevronDown className="h-4 w-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => alert('Option 1 selected')}>
+                Option 1
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => alert('Option 2 selected')}>
+                Option 2
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => alert('Option 3 selected')}>
+                Option 3
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
       </div>
     </div>

@@ -22,6 +22,8 @@ PROJET-DROIT-IA-V2/
 │   │   │ 
 │   │   ├── LLM/     
 │   │   │   ├── routes.py
+│   │   │   ├── embedding_service.py
+│   │   │   ├── llm_service.py
 │   │   │   ├── rag_service.py
 │   │   │ 
 │   │   ├── config.py
