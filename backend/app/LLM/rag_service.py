@@ -143,13 +143,11 @@ def add_pdf_to_rag(pdf_path: str):
     chunks = split_text(full_text)
     embeddings = get_embeddings(chunks)
 
-    for chunk, vector in zip(chunks, embeddings):
-        index.add(np.array([vector], dtype='float32'))
-        chunks_list.append(chunk)
+    tmp_index = faiss.IndexFlatL2(len(embeddings[0]))
+    for vector in embeddings:
+        tmp_index.add(np.array([vector], dtype='float32'))
 
-    print(f"[!!] PDF indexé avec {len(chunks)} chunks.")
-
-
+    return tmp_index, chunks
 
 # === ROUTE MODIFIÉE ===
 @router.post("/ask", response_model=MessageOut)
@@ -215,6 +213,8 @@ Réponse :"""
 
     
     return ai_message
+
+    
 @router.post("/ask-with-pdf", response_model=MessageOut)
 async def ask_with_pdf(
     question: str = Form(...),
@@ -223,72 +223,68 @@ async def ask_with_pdf(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-   
     if file.content_type != "application/pdf":
         raise HTTPException(status_code=400, detail="Seuls les fichiers PDF sont acceptés.")
-    
 
     tmp_dir = "/tmp/uploads"
     os.makedirs(tmp_dir, exist_ok=True)
     tmp_path = os.path.join(tmp_dir, f"{uuid.uuid4()}.pdf")
-    with open(tmp_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
 
-    
     try:
-        add_pdf_to_rag(tmp_path)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erreur lors de l'indexation PDF: {str(e)}")
+        with open(tmp_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
 
-    
-    user_message_data = MessageCreate(
-        conversation_id=conversation_id,
-        sender="user",
-        content=question,
-        is_ai=False
-    )
-    crud.create_message(db=db, message_data=user_message_data)
+        tmp_index, tmp_chunks = add_pdf_to_rag(tmp_path)
 
-    
-    if index.ntotal == 0:
-        raise HTTPException(status_code=500, detail="Index vectoriel vide.")
+        user_message_data = MessageCreate(
+            conversation_id=conversation_id,
+            sender="user",
+            content=question,
+            is_ai=False
+        )
+        crud.create_message(db=db, message_data=user_message_data)
 
-    question_vector = get_embeddings([question])[0]
-    _, I = index.search(np.array([question_vector]), k=5)
-    top_chunks = [chunks_list[i] for i in I[0] if i < len(chunks_list)]
-    context = "\n\n".join(top_chunks)
+        if tmp_index.ntotal == 0:
+            raise HTTPException(status_code=500, detail="Index vectoriel vide.")
 
-    prompt = f"""reponse à la question en utilisant les extraits suivants :
+        question_vector = get_embeddings([question])[0]
+        _, I = tmp_index.search(np.array([question_vector]), k=5)
+        top_chunks = [tmp_chunks[i] for i in I[0] if i < len(tmp_chunks)]
+        context = "\n\n".join(top_chunks)
+
+        prompt = f"""Réponds à la question en utilisant uniquement les extraits suivants :
 {context}
 
 Question : {question}
 Réponse :"""
 
-    try:
         headers = {
-            "Authorization": f"Bearer {LLM_API_KEY}", #mettre son api key 
+            "Authorization": f"Bearer {LLM_API_KEY}",
             "Content-Type": "application/json"
         }
-        url = LLM_API_URL
         data = {
             "model": LLM_MODEL,
             "messages": [{"role": "user", "content": prompt}]
         }
-        res = requests.post(url, headers=headers, json=data, verify=False, timeout=60)
+        res = requests.post(LLM_API_URL, headers=headers, json=data, verify=False, timeout=60)
         res.raise_for_status()
         response = res.json()["choices"][0]["message"]["content"]
 
-    except requests.RequestException as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        ai_message_data = MessageCreate(
+            conversation_id=conversation_id,
+            sender="assistant",
+            content=response,
+            is_ai=True
+        )
+        ai_message = crud.create_message(db=db, message_data=ai_message_data)
+        return ai_message
 
-   
-    ai_message_data = MessageCreate(
-        conversation_id=conversation_id,
-        sender="assistant",
-        content=response,
-        is_ai=True
-    )
-    ai_message = crud.create_message(db=db, message_data=ai_message_data)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur lors du traitement : {str(e)}")
 
-    
-    return ai_message
+    finally:
+        try:
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
+        except Exception as cleanup_err:
+            print(f"[WARN] Impossible de supprimer le fichier temporaire : {cleanup_err}")
