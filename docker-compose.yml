@@ -14,6 +14,8 @@ services:
       - db
     dns:
       - 172.19.32.1  
+    volumes:
+      - ./rag_state:/app/rag_state
     environment:
       http_proxy: "http://proxy-web.service.cnp.cs.recouv:3128"
       https_proxy: "http://proxy-web.service.cnp.cs.recouv:3128"
@@ -31,6 +33,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
+
       - postgres_data:/var/lib/postgresql/data
 
 volumes:

@@ -42,6 +42,7 @@ import os
 import fitz  
 import faiss
 import numpy as np
+import pickle
 import pytesseract
 from pdf2image import convert_from_path
 from app.LLM.embedding_service import get_embeddings
@@ -69,7 +70,8 @@ PDF_PATH = "/app/exo.pdf"
 DIM = 384
 index = faiss.IndexFlatL2(DIM)
 chunks_list = []
-
+FAISS_INDEX_PATH = "./rag_state/index.faiss"
+CHUNKS_PATH = "./rag_state/chunks.pkl"
 
 # === UTILS ===
 def split_text(text, chunk_size=200, overlap=30):
@@ -86,11 +88,34 @@ def extract_text_with_ocr(pdf_path):
         ocr_text += pytesseract.image_to_string(img, lang='fra') + "\n"
     return ocr_text
 
+def save_rag_state():
+    os.makedirs(os.path.dirname(FAISS_INDEX_PATH), exist_ok=True)
+    os.makedirs(os.path.dirname(CHUNKS_PATH), exist_ok=True)
+    faiss.write_index(index, FAISS_INDEX_PATH)
+    with open(CHUNKS_PATH, "wb") as f:
+        pickle.dump(chunks_list, f)
 
+def load_rag_state():
+    global index, chunks_list
+    if os.path.exists(FAISS_INDEX_PATH) and os.path.exists(CHUNKS_PATH):
+        index = faiss.read_index(FAISS_INDEX_PATH)
+        with open(CHUNKS_PATH, "rb") as f:
+            chunks_list = pickle.load(f)
+        print(f"[INFO] Index et chunks chargés depuis le disque ({index.ntotal} vecteurs)")
+        return True
+    return False
 
 # === INITIALISATION RAG ===
 def initialize_rag():
     global index, chunks_list
+
+    print("[INIT] Initialisation du RAG...")
+
+    if load_rag_state():
+        print("[INIT] État RAG rechargé depuis les fichiers. Aucune indexation nécessaire.")
+        return
+
+    print("[INIT] Aucun état sauvegardé trouvé. Début de l'indexation...")
 
     if not os.path.exists(PDF_PATH):
         print(f"[!!] PDF introuvable : {PDF_PATH}")
@@ -98,25 +123,30 @@ def initialize_rag():
 
     with fitz.open(PDF_PATH) as pdf:
         full_text = "\n".join([page.get_text() for page in pdf])
+    print("[INFO] Texte extrait du PDF.")
 
     if not full_text.strip():
+        print("[WARN] Texte vide, tentative d'extraction OCR...")
         full_text = extract_text_with_ocr(PDF_PATH)
 
     if not full_text.strip():
         print("[!!] Texte vide après OCR.")
         return
 
+    print("[INFO] Découpage du texte en chunks...")
     chunks = split_text(full_text)
+    print(f"[INFO] Nombre de chunks générés : {len(chunks)}")
+
+    print("[INFO] Génération des embeddings...")
     embeddings = get_embeddings(chunks)
 
-    # Correction ici : vérifier si la liste embeddings est vide
     if len(embeddings) == 0:
         print("[!!] Aucun embedding généré.")
         return
 
-    # Initialisation de l'index avec la bonne dimension
     dimension = len(embeddings[0])
     index = faiss.IndexFlatL2(dimension)
+    print(f"[INFO] Index FAISS initialisé avec dimension : {dimension}")
 
     for chunk, vector in zip(chunks, embeddings):
         index.add(np.array([vector], dtype='float32'))
@@ -125,6 +155,9 @@ def initialize_rag():
     print(f"[INFO] Nombre de chunks indexés : {len(chunks_list)}")
     print(f"[INFO] Taille index FAISS : {index.ntotal}")
 
+    print("[INFO] Sauvegarde de l'état RAG...")
+    save_rag_state()
+    print("[INFO] État RAG sauvegardé.")
 
 
 def add_pdf_to_rag(pdf_path: str):
@@ -156,8 +189,14 @@ def ask_rag(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
+    
     question = request.question
     conversation_id = request.conversation_id
+    
+    print("[DEBUG] Appel à get_answer_from_rag")
+    print(f"[DEBUG] Question : {question}")
+    print(f"[DEBUG] Taille de l'index : {index.ntotal if index else 'Index non initialisé'}")
+    print(f"[DEBUG] Nombre de chunks : {len(chunks_list) if chunks_list else 'chunks_list vide ou non initialisée'}")
 
     if index.ntotal == 0:
         raise HTTPException(status_code=500, detail="Index vectoriel vide.")
