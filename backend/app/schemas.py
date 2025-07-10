@@ -78,3 +78,15 @@ class MessageRequest(BaseModel):
 class QuestionRequest(BaseModel):
     question: str
     conversation_id: Optional[int] = None
+
+
+class PasswordResetRequest(BaseModel):
+
+    email: EmailStr
+
+class PasswordResetTokenPayload(BaseModel):
+    sub: str  
+
+class PasswordResetConfirm(BaseModel):
+    token: str
+    new_password: str

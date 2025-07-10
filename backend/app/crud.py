@@ -107,3 +107,12 @@ def create_message(db: Session, message_data: MessageCreate) -> Message:
 
 def get_messages_by_conversation(db: Session, conversation_id: int) -> List[Message]:
     return db.query(Message).filter(Message.conversation_id == conversation_id).order_by(Message.created_at.asc()).all()
+
+# ---------- MAIL ----------
+def update_user_password(db: Session, user_id: int, new_hashed_password: str):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if user:
+        user.hashed_password = new_hashed_password
+        db.commit()
+        db.refresh(user)
+    return user

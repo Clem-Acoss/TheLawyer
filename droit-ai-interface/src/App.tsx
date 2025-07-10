@@ -28,6 +28,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Register from "./pages/register";
 import Login from "./pages/login";
+import ResetPassword from "./pages/reset_password";
 
 const queryClient = new QueryClient();
 
@@ -42,6 +43,7 @@ const App = () => (
             <Route path="/Index" element={<Index />} />        {/* Page d'accueil après connexion */}
             <Route path="/" element={<Register />} />          {/* Page d'inscription */}
             <Route path="/login" element={<Login />} />        {/* Page de connexion */}
+            <Route path="/password/reset" element={<ResetPassword />} /> {/* Page de reset mdp */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

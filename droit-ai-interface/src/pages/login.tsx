@@ -26,12 +26,13 @@ import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { useUser } from "@/context/UserContext";
 import { apiFetch } from "@/lib/api";
-import { ErrorModal } from "@/components/errorModal"; 
+import { ErrorModal } from "@/components/errorModal";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const navigate = useNavigate();
   const { login } = useUser();
@@ -67,6 +68,27 @@ const Login = () => {
     }
   };
 
+  const handlePasswordResetRequest = async () => {
+    if (!email) {
+      setErrorMessage("Veuillez d'abord renseigner votre email.");
+      return;
+    }
+    setIsResetting(true);
+    try {
+      await apiFetch("/auth/password-reset/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      setErrorMessage("Un lien de réinitialisation a été envoyé à votre email.");
+    } catch (error: any) {
+      console.error("Erreur reset password:", error);
+      setErrorMessage(error.message || "Erreur lors de la demande de réinitialisation.");
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
   return (
     <>
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -95,12 +117,23 @@ const Login = () => {
               {isLoading ? "Connexion..." : "Se connecter"}
             </Button>
           </div>
-          <p className="mt-4 text-center text-sm text-muted-foreground">
-            Pas encore de compte ?{" "}
-            <Link to="/register" className="text-primary underline">
-              S'inscrire
-            </Link>
-          </p>
+          <div className="mt-4 text-center text-sm text-muted-foreground space-y-2">
+            <p>
+              Pas encore de compte ?{" "}
+              <Link to="/register" className="text-primary underline">
+                S'inscrire
+              </Link>
+            </p>
+            <p>
+              <button
+                className="text-primary underline"
+                onClick={handlePasswordResetRequest}
+                disabled={isResetting}
+              >
+                {isResetting ? "Envoi en cours..." : "Mot de passe oublié ?"}
+              </button>
+            </p>
+          </div>
         </div>
       </div>
 

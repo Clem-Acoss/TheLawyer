@@ -25,7 +25,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
 import os
 
 from app.auth.routes import router as auth_router
@@ -39,22 +38,22 @@ Base.metadata.create_all(bind=engine)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Initialisation RAG au démarrage
     rag_service.initialize_rag()
     yield
-    # Code au shutdown si besoin
+    # shutdown logic if needed
 
 app = FastAPI(lifespan=lifespan)
 
-# CORS
+# CORS - ajoute ici l'URL de ton frontend (port 3000, 5173, etc. si dev)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-    "http://localhost:8000",
-    "http://localhost:8080",
-    "http://0.0.0.0:8000",
-    "http://0.0.0.0:8080"
-    ], 
+        "http://localhost:8000",
+        "http://localhost:8080",
+        "http://0.0.0.0:8000",
+        "http://0.0.0.0:8080",
+        # ajoute si besoin ton frontend dev URL, ex: "http://localhost:5173",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -66,16 +65,18 @@ app.include_router(auth_router)
 app.include_router(chat_router)
 app.include_router(llm_routes.router)
 
-# Chemin vers le dossier static où le frontend compilé est copié dans le Docker backend
+# Dossier où le frontend compilé est copié dans Docker backend
 frontend_dist_path = os.path.join(os.path.dirname(__file__), "static")
 
-# Servir les fichiers statiques du frontend compilé
+# Monte le frontend compilé à la racine, avec html=True pour la route catch-all automatique
 app.mount("/", StaticFiles(directory=frontend_dist_path, html=True), name="static_root")
 
-# Route catch-all pour le frontend (React)
-@app.get("/{full_path:path}")
-async def serve_frontend(full_path: str):
-    index_path = os.path.join(frontend_dist_path, "index.html")
-    if os.path.exists(index_path):
-        return FileResponse(index_path)
-    return {"message": "Frontend non trouvé"}
+# !!! Suppression de la route catch-all manuelle !!!
+
+# Plus besoin de cette route car StaticFiles(html=True) fait le job :
+# @app.get("/{full_path:path}")
+# async def serve_frontend(full_path: str):
+#     index_path = os.path.join(frontend_dist_path, "index.html")
+#     if os.path.exists(index_path):
+#         return FileResponse(index_path)
+#     return {"message": "Frontend non trouvé"}

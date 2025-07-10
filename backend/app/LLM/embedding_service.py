@@ -19,8 +19,9 @@ headers = {
 
 def get_embeddings(texts):
     payload = {
-        "model": "intfloat/multilingual-e5-large",
-        "inputs": texts
+
+        "inputs": texts ,
+        "options": {}
     }
     response = requests.post(API_URL, headers=headers, data=json.dumps(payload), verify=False)
     if response.status_code != 200:

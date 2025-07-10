@@ -53,6 +53,7 @@ from app.auth.deps import get_db, get_current_user
 from app import crud, models
 from dotenv import load_dotenv
 import uuid
+import traceback
 import shutil
 router = APIRouter()
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -192,7 +193,7 @@ def ask_rag(
     
     question = request.question
     conversation_id = request.conversation_id
-    
+
     print("[DEBUG] Appel à get_answer_from_rag")
     print(f"[DEBUG] Question : {question}")
     print(f"[DEBUG] Taille de l'index : {index.ntotal if index else 'Index non initialisé'}")
@@ -212,6 +213,8 @@ def ask_rag(
 
    
     question_vector = get_embeddings([question])[0]
+    print(f"[DEBUG] Vecteur obtenu : {question_vector}")
+    print(f"[DEBUG] Type : {type(question_vector)}, longueur : {len(question_vector)}")
     _, I = index.search(np.array([question_vector]), k=5)
     top_chunks = [chunks_list[i] for i in I[0] if i < len(chunks_list)]
     context = "\n\n".join(top_chunks)
@@ -261,8 +264,11 @@ async def ask_with_pdf(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
-):
+    ):
+    print("[INFO] Requête reçue sur /ask-with-pdf")
+    
     if file.content_type != "application/pdf":
+        print("[ERROR] Fichier non PDF reçu.")
         raise HTTPException(status_code=400, detail="Seuls les fichiers PDF sont acceptés.")
 
     tmp_dir = "/tmp/uploads"
@@ -270,11 +276,14 @@ async def ask_with_pdf(
     tmp_path = os.path.join(tmp_dir, f"{uuid.uuid4()}.pdf")
 
     try:
+        print(f"[INFO] Sauvegarde du fichier temporaire : {tmp_path}")
         with open(tmp_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
+        print("[INFO] Ajout du PDF au RAG...")
         tmp_index, tmp_chunks = add_pdf_to_rag(tmp_path)
 
+        print("[INFO] Création du message utilisateur...")
         user_message_data = MessageCreate(
             conversation_id=conversation_id,
             sender="user",
@@ -284,19 +293,23 @@ async def ask_with_pdf(
         crud.create_message(db=db, message_data=user_message_data)
 
         if tmp_index.ntotal == 0:
+            print("[ERROR] L'index vectoriel est vide.")
             raise HTTPException(status_code=500, detail="Index vectoriel vide.")
 
+        print("[INFO] Génération du vecteur de question...")
         question_vector = get_embeddings([question])[0]
         _, I = tmp_index.search(np.array([question_vector]), k=5)
         top_chunks = [tmp_chunks[i] for i in I[0] if i < len(tmp_chunks)]
         context = "\n\n".join(top_chunks)
 
+        print("[INFO] Construction du prompt LLM...")
         prompt = f"""Réponds à la question en utilisant uniquement les extraits suivants :
 {context}
 
 Question : {question}
 Réponse :"""
 
+        print("[INFO] Envoi de la requête au LLM...")
         headers = {
             "Authorization": f"Bearer {LLM_API_KEY}",
             "Content-Type": "application/json"
@@ -305,10 +318,19 @@ Réponse :"""
             "model": LLM_MODEL,
             "messages": [{"role": "user", "content": prompt}]
         }
-        res = requests.post(LLM_API_URL, headers=headers, json=data, verify=False, timeout=60)
+
+        res = requests.post(
+            LLM_API_URL,
+            headers=headers,
+            json=data,
+            verify=False,
+            timeout=60
+        )
         res.raise_for_status()
         response = res.json()["choices"][0]["message"]["content"]
+        print("[INFO] Réponse LLM reçue.")
 
+        print("[INFO] Sauvegarde du message de l'assistant...")
         ai_message_data = MessageCreate(
             conversation_id=conversation_id,
             sender="assistant",
@@ -316,14 +338,18 @@ Réponse :"""
             is_ai=True
         )
         ai_message = crud.create_message(db=db, message_data=ai_message_data)
+
         return ai_message
 
     except Exception as e:
+        print(f"[ERROR] Erreur lors du traitement : {str(e)}")
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Erreur lors du traitement : {str(e)}")
 
     finally:
         try:
             if os.path.exists(tmp_path):
                 os.remove(tmp_path)
+                print("[INFO] Fichier temporaire supprimé.")
         except Exception as cleanup_err:
             print(f"[WARN] Impossible de supprimer le fichier temporaire : {cleanup_err}")
