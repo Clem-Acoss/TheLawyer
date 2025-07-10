@@ -17,7 +17,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { apiFetch } from "@/lib/api";
 import { ErrorModal } from "@/components/errorModal";
 
-const ResetPassword = () => {
+const ResetPassword= () => {
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
 
@@ -45,7 +45,7 @@ const ResetPassword = () => {
 
     setIsLoading(true);
     try {
-      await apiFetch("/auth/password-reset/confirm", {
+      await apiFetch("/password-reset/confirm", {
         method: "POST",
         body: JSON.stringify({
           token,
