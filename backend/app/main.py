@@ -20,11 +20,11 @@ Remarques :
 - La vectorisation PDF et indexation RAG peuvent être lancées au démarrage via le router `rag_service`
 - Le backend supporte plusieurs modules fonctionnels (auth, chat, LLM, RAG) de manière modulaire
 """
-
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from contextlib import asynccontextmanager
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from contextlib import asynccontextmanager
 import os
 
 from app.auth.routes import router as auth_router
@@ -40,11 +40,10 @@ Base.metadata.create_all(bind=engine)
 async def lifespan(app: FastAPI):
     rag_service.initialize_rag()
     yield
-    # shutdown logic if needed
 
 app = FastAPI(lifespan=lifespan)
 
-# CORS - ajoute ici l'URL de ton frontend (port 3000, 5173, etc. si dev)
+# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -52,31 +51,36 @@ app.add_middleware(
         "http://localhost:8080",
         "http://0.0.0.0:8000",
         "http://0.0.0.0:8080",
-        # ajoute si besoin ton frontend dev URL, ex: "http://localhost:5173",
+        "http://localhost:5173",
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Inclusion des routers
-app.include_router(rag_service.router, prefix="/rag", tags=["RAG"])
+# Routers API
 app.include_router(auth_router)
 app.include_router(chat_router)
+app.include_router(rag_service.router, prefix="/rag", tags=["RAG"])
 app.include_router(llm_routes.router)
 
-# Dossier où le frontend compilé est copié dans Docker backend
+# === FRONTEND (React) ===
+
+# Chemin vers le dossier `static/` (build React)
 frontend_dist_path = os.path.join(os.path.dirname(__file__), "static")
+assets_path = os.path.join(frontend_dist_path, "assets")
 
-# Monte le frontend compilé à la racine, avec html=True pour la route catch-all automatique
-app.mount("/", StaticFiles(directory=frontend_dist_path, html=True), name="static_root")
+# 1. Sert les fichiers /assets/... (JS, CSS, fonts, etc.)
+if os.path.isdir(assets_path):
+    app.mount("/assets", StaticFiles(directory=assets_path), name="assets")
 
-# !!! Suppression de la route catch-all manuelle !!!
+# 2. Sert le dossier React build (pour favicon, manifest...)
+app.mount("/static", StaticFiles(directory=frontend_dist_path), name="static_root")
 
-# Plus besoin de cette route car StaticFiles(html=True) fait le job :
-# @app.get("/{full_path:path}")
-# async def serve_frontend(full_path: str):
-#     index_path = os.path.join(frontend_dist_path, "index.html")
-#     if os.path.exists(index_path):
-#         return FileResponse(index_path)
-#     return {"message": "Frontend non trouvé"}
+# 3. Catch-all pour React Router (SPA)
+@app.get("/{full_path:path}")
+async def serve_react_app(full_path: str):
+    index_path = os.path.join(frontend_dist_path, "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    return {"message": "index.html non trouvé"}

@@ -13,7 +13,7 @@ services:
     depends_on:
       - db
     dns:
-      - 172.27.112.1
+      - 172.24.192.1
     volumes:
       - ./rag_state:/app/rag_state
     environment:

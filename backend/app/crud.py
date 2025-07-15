@@ -36,7 +36,7 @@ from sqlalchemy.orm import Session
 from app.models import User, Conversation, Message
 from app.schemas import UserCreate, ConversationCreate, MessageCreate
 from app.auth.utils import verify_password, hash_password
-
+from app import models
 
 # ---------- USER ----------
 

@@ -213,7 +213,6 @@ def ask_rag(
 
    
     question_vector = get_embeddings([question])[0]
-    print(f"[DEBUG] Vecteur obtenu : {question_vector}")
     print(f"[DEBUG] Type : {type(question_vector)}, longueur : {len(question_vector)}")
     _, I = index.search(np.array([question_vector]), k=5)
     top_chunks = [chunks_list[i] for i in I[0] if i < len(chunks_list)]
@@ -228,7 +227,7 @@ Réponse :"""
    
     try:
         headers = {
-            "Authorization": f"Bearer {LLM_API_KEY}", #mettre son api key 
+            "Authorization": f"Bearer {LLM_API_KEY}", 
             "Content-Type": "application/json"
         }
         url = LLM_API_URL

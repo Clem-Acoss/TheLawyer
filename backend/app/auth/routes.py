@@ -50,7 +50,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from app.auth.deps import get_db
 from fastapi import BackgroundTasks
 from app.auth.email_service import send_email
-
+from app.auth.utils import decode_access_token
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 

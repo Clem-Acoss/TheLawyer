@@ -62,6 +62,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { NewConversationDialog } from "@/components/NewConversationDialog";
+import { ErrorModal } from "@/components/errorModal";
 type Conversation = {
   id: number;
   title: string;
@@ -102,7 +103,8 @@ const Index = () => {
     localStorage.getItem("convTitle") || undefined
   );
   const [mode, setMode] = useState<"rag" | "llm">("rag");
-
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showErrorModal, setShowErrorModal] = useState(false);
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
@@ -130,6 +132,10 @@ const Index = () => {
       fetchMessages(conv.id);
     }
   };
+  const showError = (message: string) => {
+    setErrorMessage(message);
+    setShowErrorModal(true);
+  };
 
   const fetchMessages = (convId: number) => {
     apiFetch<Message[]>(`/chat/messages/${convId}`)
@@ -151,7 +157,7 @@ const Index = () => {
     if (!input.trim() && files.length === 0) return;
 
     if (selectedConvId === null) {
-      alert("Veuillez sélectionner une conversation ou en créer une nouvelle.");
+      showError("Veuillez sélectionner une conversation ou en créer une nouvelle.");
       return;
     }
 
@@ -166,7 +172,7 @@ const Index = () => {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        alert("Vous devez être connecté.");
+        showError("Vous devez être connecté.");
         setIsLoading(false);
         return;
       }
@@ -174,7 +180,7 @@ const Index = () => {
       if (files.length > 0) {
         // Cas avec PDF à envoyer (uniquement en mode RAG)
         if (mode !== "rag") {
-          alert("L'envoi de fichiers PDF n'est disponible qu'en mode RAG.");
+          showError("L'envoi de fichiers PDF n'est disponible qu'en mode RAG.");
           setIsLoading(false);
           return;
         }
@@ -190,7 +196,7 @@ const Index = () => {
           body: formData,
           headers: {
             Authorization: `Bearer ${token}`,
-            // Ne PAS ajouter Content-Type pour FormData
+            
           },
         });
 
@@ -255,7 +261,7 @@ const Index = () => {
       }
     } catch (e) {
       console.error(e);
-      alert(`Erreur: ${(e as Error).message}`);
+      showError(`Erreur: ${(e as Error).message}`);
     } finally {
       setIsLoading(false);
     }
@@ -477,6 +483,11 @@ const Index = () => {
           if (confirmCallback) confirmCallback();
         }}
         onCancel={() => setShowConfirm(false)}
+      />
+      <ErrorModal
+        open={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        description={errorMessage || "Une erreur est survenue."}
       />
     </div>
   );

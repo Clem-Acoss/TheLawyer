@@ -45,7 +45,7 @@ const ResetPassword= () => {
 
     setIsLoading(true);
     try {
-      await apiFetch("/password-reset/confirm", {
+      await apiFetch("/auth/password-reset/confirm", {
         method: "POST",
         body: JSON.stringify({
           token,
