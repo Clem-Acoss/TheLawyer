@@ -2,16 +2,14 @@
 FROM node:20 AS frontend-builder
 
 WORKDIR /frontend
+# Copier le reste du code frontend (après installation des dépendances pour cache optimisé)
+COPY droit-ai-interface/ ./
 
-# Copier uniquement package.json et package-lock.json pour installer les dépendances
-COPY droit-ai-interface/package.json ./ 
-COPY droit-ai-interface/package-lock.json ./
-
+RUN npm config set registry http://nexus.urssaf.recouv/repository/npm-proxy/
 # Installer les dépendances Node avec logs détaillés
 RUN npm install --force --verbose
 
-# Copier le reste du code frontend (après installation des dépendances pour cache optimisé)
-COPY droit-ai-interface/ ./
+
 
 # Définir l'URL API et build le frontend
 ARG VITE_API_URL
@@ -72,7 +70,7 @@ RUN pip install -v \
 
 # Copier le code backend
 COPY backend/app ./app
-COPY backend/app/exo.pdf /app/exo.pdf
+COPY backend/app/boss/ /app/boss/
 # Copier le frontend compilé dans static
 COPY --from=frontend-builder /frontend/dist ./app/static
 

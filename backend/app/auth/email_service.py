@@ -22,10 +22,10 @@ def send_email(to_email: str, subject: str, html_content: str):
         msg.attach(part)
 
         # Connexion SMTP avec TLS
-       # with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
-       #    server.starttls()
-       #    server.login(SMTP_USER, SMTP_PASSWORD)
-       #    server.sendmail(SMTP_FROM, to_email, msg.as_string())
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+           server.starttls()
+           server.login(SMTP_USER, SMTP_PASSWORD)
+           server.sendmail(SMTP_FROM, to_email, msg.as_string())
 
         logging.info(f"[EMAIL] Email envoyé à {to_email}")
 

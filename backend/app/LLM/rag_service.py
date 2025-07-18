@@ -67,7 +67,7 @@ LLM_API_URL = os.getenv("LLM_API_URL")
 LLM_MODEL = os.getenv("LLM_MODEL")
 
 # === CONFIGURATION ===
-PDF_PATH = "/app/exo.pdf"
+PDF_DIR = "/app/boss"
 DIM = 384
 index = faiss.IndexFlatL2(DIM)
 chunks_list = []
@@ -110,55 +110,72 @@ def load_rag_state():
 def initialize_rag():
     global index, chunks_list
 
-    print("[INIT] Initialisation du RAG...")
+    print("[INIT] Initialisation du RAG multi-PDF...")
 
     if load_rag_state():
         print("[INIT] État RAG rechargé depuis les fichiers. Aucune indexation nécessaire.")
         return
 
-    print("[INIT] Aucun état sauvegardé trouvé. Début de l'indexation...")
-
-    if not os.path.exists(PDF_PATH):
-        print(f"[!!] PDF introuvable : {PDF_PATH}")
+    if not os.path.exists(PDF_DIR):
+        print(f"[!!] Dossier introuvable : {PDF_DIR}")
         return
 
-    with fitz.open(PDF_PATH) as pdf:
-        full_text = "\n".join([page.get_text() for page in pdf])
-    print("[INFO] Texte extrait du PDF.")
+    all_chunks = []
+    all_embeddings = []
 
-    if not full_text.strip():
-        print("[WARN] Texte vide, tentative d'extraction OCR...")
-        full_text = extract_text_with_ocr(PDF_PATH)
+    for filename in os.listdir(PDF_DIR):
+        if not filename.lower().endswith(".pdf"):
+            continue
 
-    if not full_text.strip():
-        print("[!!] Texte vide après OCR.")
+        pdf_path = os.path.join(PDF_DIR, filename)
+        print(f"[INFO] Traitement du fichier : {filename}")
+
+        try:
+            with fitz.open(pdf_path) as pdf:
+                full_text = "\n".join([page.get_text() for page in pdf])
+        except Exception as e:
+            print(f"[WARN] Impossible de lire {filename} avec PyMuPDF : {e}")
+            continue
+
+        if not full_text.strip():
+            print(f"[INFO] Aucun texte détecté dans {filename}, tentative OCR...")
+            try:
+                full_text = extract_text_with_ocr(pdf_path)
+            except Exception as e:
+                print(f"[WARN] OCR échoué pour {filename} : {e}")
+                continue
+
+        if not full_text.strip():
+            print(f"[WARN] Texte vide même après OCR pour {filename}, ignoré.")
+            continue
+
+        chunks = split_text(full_text)
+        embeddings = get_embeddings(chunks)
+
+        if embeddings is None or len(embeddings) == 0:
+            print(f"[WARN] Aucun embedding généré pour {filename}, ignoré.")
+            continue
+
+        all_chunks.extend(chunks)
+        all_embeddings.extend(embeddings)
+
+    if not all_embeddings:
+        print("[!!] Aucun embedding généré pour les PDF du dossier.")
         return
 
-    print("[INFO] Découpage du texte en chunks...")
-    chunks = split_text(full_text)
-    print(f"[INFO] Nombre de chunks générés : {len(chunks)}")
-
-    print("[INFO] Génération des embeddings...")
-    embeddings = get_embeddings(chunks)
-
-    if len(embeddings) == 0:
-        print("[!!] Aucun embedding généré.")
-        return
-
-    dimension = len(embeddings[0])
+    dimension = len(all_embeddings[0])
     index = faiss.IndexFlatL2(dimension)
-    print(f"[INFO] Index FAISS initialisé avec dimension : {dimension}")
 
-    for chunk, vector in zip(chunks, embeddings):
+    print(f"[INFO] Création de l'index avec {len(all_chunks)} chunks...")
+    for chunk, vector in zip(all_chunks, all_embeddings):
         index.add(np.array([vector], dtype='float32'))
-        chunks_list.append(chunk)
 
-    print(f"[INFO] Nombre de chunks indexés : {len(chunks_list)}")
-    print(f"[INFO] Taille index FAISS : {index.ntotal}")
+    chunks_list.extend(all_chunks)
 
-    print("[INFO] Sauvegarde de l'état RAG...")
+    print(f"[INFO] Index FAISS construit avec {index.ntotal} vecteurs.")
     save_rag_state()
     print("[INFO] État RAG sauvegardé.")
+
 
 
 def add_pdf_to_rag(pdf_path: str):
@@ -218,11 +235,25 @@ def ask_rag(
     top_chunks = [chunks_list[i] for i in I[0] if i < len(chunks_list)]
     context = "\n\n".join(top_chunks)
 
-    prompt = f"""Voici des extraits juridiques :
-{context}
+    prompt = f"""
+    Tu es un assistant juridique. Réponds à la question suivante en t'appuyant sur les extraits ci-dessous, ne prends pas en compte ce qui n'a aucun rapport avec la question. 
 
-Question : {question}
-Réponse :"""
+    Formate ta réponse de façon claire et lisible, en utilisant des **titres**, des **puces** ou des **listes numérotées** si nécessaire. Utilise le **Markdown** pour la mise en forme.
+
+    ---
+
+    ### Contexte :
+    {context}
+
+    ---
+
+    ### Question :
+    {question}
+
+    ---
+
+    ### Réponse :
+    """
 
    
     try:
