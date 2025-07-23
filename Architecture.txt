@@ -1,0 +1,75 @@
+PROJET-DROIT-IA-V2/
+│
+├── .env                            # Variables d'environnement (clé secrète, URL DB, etc.)
+├── .gitignore
+├── README.md
+├── Architecture.txt                # Document expliquant l'architecture du projet
+├── snapshotenv.txt
+├── snapshot_env.sh
+│
+├── backend/
+│   ├── app
+│   │   ├── auth/     
+│   │   │   ├── routes.py
+│   │   │   ├── utils.py
+│   │   │   ├── deps.py
+│   │   │   ├── email_service.py
+│   │   │
+│   │   ├── boss/
+│   │   │   ├── boss.pdf 
+│   │   │
+│   │   ├── chat/     
+│   │   │   ├── routes.py
+│   │   │   ├── service.py
+│   │   │ 
+│   │   ├── LLM/     
+│   │   │   ├── routes.py
+│   │   │   ├── embedding_service.py
+│   │   │   ├── llm_service.py
+│   │   │   ├── rag_service.py
+│   │   │ 
+│   │   ├── config.py
+│   │   ├── crud.py
+│   │   ├── database.py
+│   │   ├── main.py 
+│   │   ├── models.py
+│   │   ├── schemas.py 
+│   
+├── droit-ai-interface/            # Frontend React + Tailwind
+│   ├── package.json
+│   ├── tailwind.config.ts
+│   ├── tsconfig.json
+│   ├── vite.config.ts
+│   ├── public/
+│   │   ├── favicon.ico
+│   │   ├── placeholder.svg
+│   │   └── robots.txt
+│   ├── src/
+│   │   ├── App.tsx
+│   │   ├── main.tsx
+│   │   ├── index.css
+│   │   ├── components/
+│   │   │   ├── FileUpload.tsx
+│   │   │   ├── ui/
+│   │   │   │   ├── ChatMessage.tsx
+│   │   │   │   └── ConversationHistory.tsx
+│   │   ├── hooks/
+│   │   │   ├── use-mobile.tsx
+│   │   │   └── use-toast.ts
+│   │   ├── lib/  
+│   │   │   ├──  api.ts          
+│   │   │   ├── utils.ts
+│   │   ├── pages/
+│   │   │   ├── Index.tsx          # Page principale (chat)
+│   │   │   ├── login.tsx
+│   │   │   ├── register.tsx
+│   │   │   └── NotFound.tsx
+│   │   
+│   ├── vite-env.d.ts
+│   ├── tsconfig.app.json
+│   ├── tsconfig.node.json
+│   ├── bun.lockb
+│   ├── eslint.config.js
+│   ├── components.json
+│   ├── App.css
+│   └── node_modules/

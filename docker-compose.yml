@@ -1,0 +1,44 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:8000
+    container_name: thetrader-backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      - db
+    dns:
+      -   10.11.4.1
+    extra_hosts:
+      - "proxy-web.service.cnp.cs.recouv:10.203.69.250"  
+      - "smtp.km.recouv:10.203.210.208"
+      - "nexus.urssaf.recouv:10.203.209.35"
+    volumes:
+      - ./rag_state:/app/rag_state
+    environment:
+      http_proxy: "http://proxy-web.service.cnp.cs.recouv:3128"
+      https_proxy: "http://proxy-web.service.cnp.cs.recouv:3128"
+      HTTP_PROXY: "http://proxy-web.service.cnp.cs.recouv:3128"
+      HTTPS_PROXY: "http://proxy-web.service.cnp.cs.recouv:3128"
+
+  db:
+    image: postgres:16
+    container_name: thetrader-db
+    restart: always
+    environment:
+      POSTGRES_DB: baseTheLawyer
+      POSTGRES_USER: clementgardair
+      POSTGRES_PASSWORD: root
+    ports:
+      - "5432:5432"
+    volumes:
+
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

@@ -1,0 +1,82 @@
+
+/**
+ * index.css
+ * 
+ * Feuille de styles principale intégrant Tailwind CSS et définitions de variables CSS personnalisées.
+ * 
+ * Contenu :
+ * - Import de la police Inter depuis Google Fonts avec différents poids.
+ * - Inclusion des directives Tailwind : base, components, utilities.
+ * - Définition des variables CSS personnalisées (couleurs, rayons, etc.) dans la racine (:root).
+ * - Application globale des bordures par défaut à tous les éléments.
+ * - Style global du body avec fond, couleur de texte, police et fonctionnalités OpenType.
+ * - Classe utilitaire .glass pour fond semi-transparent avec effet de flou et bordure légère.
+ * - Classes utilitaires .scrollbar-hidden pour masquer la scrollbar sur différents navigateurs.
+ * 
+ * Auteurs : Clément Gardair
+ * Projet : PROJET-DROIT-IA-V2
+ */
+
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 229 27% 14%;
+    --foreground: 210 40% 98%;
+
+    --card: 229 27% 14%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 229 27% 14%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 252 80% 74%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 228 13% 24%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 228 13% 24%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 228 13% 24%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 228 13% 24%;
+    --input: 228 13% 24%;
+    --ring: 252 80% 74%;
+
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-inter;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+.glass {
+  @apply bg-secondary/30 backdrop-blur-lg border border-white/10;
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hidden {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
