@@ -306,7 +306,7 @@ const Index = () => {
         onNewConversation={startNewConversation}
       />
 
-      <main className="flex-1 flex flex-col">
+      <main className="flex-1 flex flex-col relative">
         <Header
           convForHistory={convForHistory}
           selectedTitle={selectedTitle}
