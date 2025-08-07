@@ -4,8 +4,6 @@ PROJET-DROIT-IA-V2/
 ├── .gitignore
 ├── README.md
 ├── Architecture.txt                # Document expliquant l'architecture du projet
-├── start.bat                       # Script de démarrage (Windows)
-├── stop.bat                        # Script d'arrêt (Windows)
 ├── snapshotenv.txt
 ├── snapshot_env.sh
 │
@@ -15,7 +13,11 @@ PROJET-DROIT-IA-V2/
 │   │   │   ├── routes.py
 │   │   │   ├── utils.py
 │   │   │   ├── deps.py
-│   │   │ 
+│   │   │   ├── email_service.py
+│   │   │
+│   │   ├── boss/
+│   │   │   ├── boss.pdf 
+│   │   │
 │   │   ├── chat/     
 │   │   │   ├── routes.py
 │   │   │   ├── service.py
@@ -55,14 +57,14 @@ PROJET-DROIT-IA-V2/
 │   │   │   ├── use-mobile.tsx
 │   │   │   └── use-toast.ts
 │   │   ├── lib/  
-│   │   │   ├──  api.ts                # Bibliothèques utilitaires ou API clients
+│   │   │   ├──  api.ts          
 │   │   │   ├── utils.ts
 │   │   ├── pages/
 │   │   │   ├── Index.tsx          # Page principale (chat)
 │   │   │   ├── login.tsx
 │   │   │   ├── register.tsx
 │   │   │   └── NotFound.tsx
-│
+│   │   
 │   ├── vite-env.d.ts
 │   ├── tsconfig.app.json
 │   ├── tsconfig.node.json
@@ -70,5 +72,4 @@ PROJET-DROIT-IA-V2/
 │   ├── eslint.config.js
 │   ├── components.json
 │   ├── App.css
-│
 │   └── node_modules/

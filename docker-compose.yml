@@ -13,7 +13,11 @@ services:
     depends_on:
       - db
     dns:
-      - 172.25.16.1
+      -   10.11.4.1
+    extra_hosts: 
+      - "proxy-web.service.cnp.cs.recouv:10.203.69.250"  
+      - "smtp.km.recouv:10.203.210.208"
+      - "nexus.urssaf.recouv:10.203.209.35"
     volumes:
       - ./rag_state:/app/rag_state
     environment:
@@ -33,7 +37,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-
+     
       - postgres_data:/var/lib/postgresql/data
 
 volumes:

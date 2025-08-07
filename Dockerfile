@@ -70,7 +70,8 @@ RUN pip install -v \
 
 # Copier le code backend
 COPY backend/app ./app
-COPY backend/app/boss/ /app/boss/
+
+
 # Copier le frontend compilé dans static
 COPY --from=frontend-builder /frontend/dist ./app/static
 

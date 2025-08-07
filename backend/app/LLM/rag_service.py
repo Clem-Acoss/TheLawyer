@@ -67,7 +67,7 @@ LLM_API_URL = os.getenv("LLM_API_URL")
 LLM_MODEL = os.getenv("LLM_MODEL")
 
 # === CONFIGURATION ===
-PDF_DIR = "/app/boss"
+PDF_DIR ="//app//app//Boss"
 DIM = 384
 index = faiss.IndexFlatL2(DIM)
 chunks_list = []
@@ -150,7 +150,17 @@ def initialize_rag():
             continue
 
         chunks = split_text(full_text)
-        embeddings = get_embeddings(chunks)
+        BATCH_SIZE = 100  # Ajuste selon la taille acceptable pour l’API
+        embeddings = []
+
+        for i in range(0, len(chunks), BATCH_SIZE):
+            batch = chunks[i:i + BATCH_SIZE]
+        try:
+            batch_embeddings = get_embeddings(batch)
+            embeddings.extend(batch_embeddings)
+        except Exception as e:
+            print(f"[WARN] Échec d'embedding pour le batch {i}–{i+BATCH_SIZE}: {e}")
+
 
         if embeddings is None or len(embeddings) == 0:
             print(f"[WARN] Aucun embedding généré pour {filename}, ignoré.")

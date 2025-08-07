@@ -17,15 +17,21 @@ def send_email(to_email: str, subject: str, html_content: str):
         msg["From"] = SMTP_FROM
         msg["To"] = to_email
 
-        # Ajoute le contenu HTML
         part = MIMEText(html_content, "html", "utf-8")
         msg.attach(part)
 
-        # Connexion SMTP avec TLS
         with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
-           server.starttls()
-           server.login(SMTP_USER, SMTP_PASSWORD)
-           server.sendmail(SMTP_FROM, to_email, msg.as_string())
+            server.set_debuglevel(1)  # pour debug, optionnel
+
+            server.connect(SMTP_HOST, SMTP_PORT)
+
+            if SMTP_PORT == 587:
+                server.starttls()
+
+            if SMTP_USER and SMTP_PASSWORD:
+                server.login(SMTP_USER, SMTP_PASSWORD)
+
+            server.sendmail(SMTP_FROM, to_email, msg.as_string())
 
         logging.info(f"[EMAIL] Email envoyé à {to_email}")
 

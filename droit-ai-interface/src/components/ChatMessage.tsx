@@ -53,9 +53,11 @@ export const ChatMessage = ({ message, isAi, isLoading }: ChatMessageProps) => {
       <div className="flex-1 flex justify-between items-start">
         <div className="text-sm leading-relaxed">
           {isLoading ? (
-            <div className="h-4 w-12 animate-pulse bg-muted rounded" />
+            message
+          ) : typeof message === "string" ? (
+            <ReactMarkdown>{message}</ReactMarkdown>
           ) : (
-            <ReactMarkdown>{String(message)}</ReactMarkdown>
+            message
           )}
         </div>
         {isAi && !isLoading && (
