@@ -18,7 +18,6 @@ type HeaderProps = {
   onDelete: (title: string) => void;
   onSettings: () => void;
   onLogout: () => void;
-  onCraClick: () => void;
   onNewConversation: () => void;
 };
 
@@ -29,7 +28,6 @@ export const Header = ({
   onDelete,
   onSettings,
   onLogout,
-  onCraClick,
   onNewConversation,
 }: HeaderProps) => (
   <header className="h-14 border-b border-border flex items-center px-4 glass">

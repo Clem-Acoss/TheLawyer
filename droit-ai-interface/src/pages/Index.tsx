@@ -12,7 +12,6 @@
  * - Envoi de messages texte et upload de fichiers PDF en lien avec une conversation sélectionnée.
  * - Support de deux modes d'interaction avec le backend : 
  *    - RAG (Retrieval-Augmented Generation) pour la recherche assistée par documents.
- *    - LLM simple pour un chatbot basé uniquement sur un modèle de langage.
  * - Gestion de l'authentification via token JWT stocké dans le localStorage.
  * - Scroll automatique vers le dernier message lors de l'ajout de nouveaux messages.
  * - Utilisation de composants UI personnalisés (Button, Input, ScrollArea, DropdownMenu, etc.) 
@@ -35,16 +34,11 @@
 
 
 import React, { useState, useEffect, useRef } from "react";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { ChatMessage } from "@/components/ChatMessage";
-import { ConversationHistory } from "@/components/ConversationHistory";
+import { MainChatArea } from "@/components/MainChatArea";
 import { useUser } from "@/context/UserContext";
 import { apiFetch } from "@/lib/api";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
-import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { NewConversationDialog } from "@/components/NewConversationDialog";
-import { ErrorModal } from "@/components/errorModal";
+import { ModalWrapper } from "@/components/ModalWrapper";
 import { InputArea } from "@/components/InputArea";
 import {FloatingButtons } from "@/components/floatingButtons";
 import { Header } from "@/components/Header";
@@ -312,8 +306,6 @@ const Index = () => {
         onNewConversation={startNewConversation}
       />
 
-
-      {/* Main */}
       <main className="flex-1 flex flex-col">
         <Header
           convForHistory={convForHistory}
@@ -322,24 +314,14 @@ const Index = () => {
           onDelete={handleDeleteConversation}
           onSettings={handleSettings}
           onLogout={handleLogout}
-          onCraClick={() => {}} // ou supprime si inutile
           onNewConversation={startNewConversation}
         />
 
-        <ScrollArea className="flex-1 p-4">
-          <div className="space-y-4">
-            {messages.map((msg, i) => (
-              <ChatMessage key={i} message={msg.text} isAi={msg.isAi} />
-            ))}
-            {isLoading && (
-              <ChatMessage
-                message={<Skeleton className="h-6 w-20 rounded-md bg-muted animate-pulse" />}
-                isAi={true}
-              />
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-        </ScrollArea>
+        <MainChatArea
+          messages={messages}
+          isLoading={isLoading}
+          messagesEndRef={messagesEndRef}
+        />
 
         <InputArea
           input={input}
@@ -357,25 +339,17 @@ const Index = () => {
         />
         {showFloatingButtons && <FloatingButtons />}
       </main>
-      <NewConversationDialog
-         open={newConvDialogOpen}
-         onOpenChange={setNewConvDialogOpen}
-         onCreate={handleNewConversation}
-      />
-      <ConfirmDialog
-        open={showConfirm}
-        title="Supprimer la conversation"
-        description="Voulez-vous vraiment supprimer cette conversation ?"
-        onConfirm={() => {
-          if (confirmCallback) confirmCallback();
-        }}
-        onCancel={() => setShowConfirm(false)}
-      />
-      <ErrorModal
-        open={showErrorModal}
-        onClose={() => setShowErrorModal(false)}
-        description={errorMessage || "Une erreur est survenue."}
-      />
+        <ModalWrapper
+          newConvDialogOpen={newConvDialogOpen}
+          setNewConvDialogOpen={setNewConvDialogOpen}
+          onCreateConversation={handleNewConversation}
+          showConfirm={showConfirm}
+          setShowConfirm={setShowConfirm}
+          onConfirmDelete={() => confirmCallback?.()}
+          showErrorModal={showErrorModal}
+          setShowErrorModal={setShowErrorModal}
+          errorMessage={errorMessage}
+        />
     </div>
   );
 };
