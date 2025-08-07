@@ -35,26 +35,8 @@
 
 
 import React, { useState, useEffect, useRef } from "react";
-import { Send, Menu, ChevronDown, FileText } from "lucide-react"; 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
 import { ChatMessage } from "@/components/ChatMessage";
-import { FileUpload } from "@/components/FileUpload";
 import { ConversationHistory } from "@/components/ConversationHistory";
 import { useUser } from "@/context/UserContext";
 import { apiFetch } from "@/lib/api";
@@ -63,6 +45,10 @@ import { useNavigate } from "react-router-dom";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { NewConversationDialog } from "@/components/NewConversationDialog";
 import { ErrorModal } from "@/components/errorModal";
+import { InputArea } from "@/components/InputArea";
+import {FloatingButtons } from "@/components/floatingButtons";
+import { Header } from "@/components/Header";
+import { Sidebar } from "@/components/Sidebar";
 type Conversation = {
   id: number;
   title: string;
@@ -105,6 +91,7 @@ const Index = () => {
   const [mode, setMode] = useState<"rag" | "llm">("rag");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showErrorModal, setShowErrorModal] = useState(false);
+  const [showFloatingButtons, setShowFloatingButtons] = React.useState(false);
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
@@ -122,7 +109,9 @@ const Index = () => {
     title: c.title,
     date: new Date(c.created_at).toLocaleDateString("fr-FR"),
   }));
-
+  const toggleFloatingButtons = () => {
+    setShowFloatingButtons(prev => !prev);
+  };
   const handleSelectConversation = (title: string) => {
     const conv = conversations.find((c) => c.title === title);
     if (conv) {
@@ -233,30 +222,6 @@ const Index = () => {
             ...prev,
             { text: data.content || data.response || "Réponse reçue.", isAi: true },
           ]);
-        } else {
-          // Mode LLM simple
-          const response = await fetch("/chat/send-message-llm", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-            conversation_id: selectedConvId,
-            sender: "user",         
-            content: userMessage,   
-          })
-
-          });
-
-          if (!response.ok) throw new Error("Erreur lors de la requête LLM.");
-
-          const data: ApiResponse = await response.json();
-
-          setMessages((prev) => [
-            ...prev,
-            { text: data.content || data.response || "Réponse reçue.", isAi: true },
-          ]);
         }
       }
     } catch (e) {
@@ -336,58 +301,31 @@ const Index = () => {
 
   return (
     <div className="flex h-screen bg-background">
-      {/* Sidebar */}
-      <aside className="hidden md:flex w-80 border-r border-border flex-col p-4">
-        <Button variant="outline" className="mb-4 w-full" onClick={startNewConversation}>
-          Nouvelle conversation
-        </Button>
-        <ConversationHistory
-           conversations={convForHistory}
-           selectedTitle={selectedTitle}
-           onSelect={handleSelectConversation}
-           onDelete={handleDeleteConversation}
-           onSettings={handleSettings}    
-           onLogout={handleLogout} 
-        />
-        {conversations.length === 0 && <p>Aucune conversation disponible</p>}
-      </aside>
+      <Sidebar
+        conversations={convForHistory}
+        selectedTitle={selectedTitle}
+        onSelect={handleSelectConversation}
+        onDelete={handleDeleteConversation}
+        onSettings={handleSettings}
+        onLogout={handleLogout}
+        onCraClick={() => {}} // à implémenter ou ignorer si pas utilisé
+        onNewConversation={startNewConversation}
+      />
+
 
       {/* Main */}
       <main className="flex-1 flex flex-col">
-        {/* Header */}
-        <header className="h-14 border-b border-border flex items-center px-4 glass">
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-80 sm:w-96">
-              <SheetHeader>
-                <SheetTitle>Conversations</SheetTitle>
-                <SheetDescription>Gérez vos conversations existantes</SheetDescription>
-              </SheetHeader>
-              <div className="flex flex-col h-full mt-4">
-                <Button variant="outline" className="mb-4" onClick={startNewConversation}>
-                  Nouvelle conversation
-                </Button>
-                <ConversationHistory
+        <Header
+          convForHistory={convForHistory}
+          selectedTitle={selectedTitle}
+          onSelect={handleSelectConversation}
+          onDelete={handleDeleteConversation}
+          onSettings={handleSettings}
+          onLogout={handleLogout}
+          onCraClick={() => {}} // ou supprime si inutile
+          onNewConversation={startNewConversation}
+        />
 
-                   conversations={convForHistory}
-                   selectedTitle={selectedTitle}
-                   onSelect={handleSelectConversation}
-                   onDelete={handleDeleteConversation}
-                   onSettings={handleSettings}    
-                   onLogout={handleLogout}    
-
-                />
-              </div>
-            </SheetContent>
-          </Sheet>
-          <h1 className="text-lg font-semibold ml-4">Assistant Juridique</h1>
-        </header>
-
-        {/* Messages */}
         <ScrollArea className="flex-1 p-4">
           <div className="space-y-4">
             {messages.map((msg, i) => (
@@ -403,72 +341,21 @@ const Index = () => {
           </div>
         </ScrollArea>
 
-        {/* Zone d’input et PDF */}
-        <div className="p-4 border-t border-border glass flex flex-col gap-2">
-          {/* Affichage conditionnel du FileUpload */}
-          {showUpload && (
-            <FileUpload
-              files={files}
-              onFileSelect={setFiles}
-              onRemoveFile={(name) =>
-                setFiles((prev) => prev.filter((file) => file.name !== name))
-              }
-            />
-          )}
-
-          <div className="flex items-center gap-2">
-            <Input
-              placeholder="Posez votre question..."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSend();
-                }
-              }}
-              disabled={isLoading}
-            />
-
-            {/* Bouton d’affichage de la zone d’upload */}
-            <Button
-              variant={showUpload ? "default" : "outline"}
-              size="icon"
-              onClick={() => setShowUpload((prev) => !prev)}
-              title="Importer un PDF"
-            >
-              <FileText className="h-5 w-5" />
-            </Button>
-
-            {/* Menu déroulant pour RAG/LLM */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem
-                  onClick={() => setMode("rag")}
-                  className={mode === "rag" ? "font-bold" : ""}
-                >
-                  RAG
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => setMode("llm")}
-                  className={mode === "llm" ? "font-bold" : ""}
-                >
-                  LLM simple
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* Bouton envoyer */}
-            <Button onClick={handleSend} disabled={isLoading} size="icon">
-              <Send />
-            </Button>
-          </div>
-        </div>
+        <InputArea
+          input={input}
+          onInputChange={(e) => setInput(e.target.value)}
+          onSend={handleSend}
+          isLoading={isLoading}
+          showUpload={showUpload}
+          toggleUpload={() => setShowUpload(prev => !prev)}
+          files={files}
+          onFileSelect={setFiles}
+          onRemoveFile={(name) =>
+            setFiles(prev => prev.filter(file => file.name !== name))
+          }
+          toggleFloatingButtons={toggleFloatingButtons}
+        />
+        {showFloatingButtons && <FloatingButtons />}
       </main>
       <NewConversationDialog
          open={newConvDialogOpen}
