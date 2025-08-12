@@ -55,6 +55,13 @@ from dotenv import load_dotenv
 import uuid
 import traceback
 import shutil
+import nltk
+from nltk.data import find
+from nltk import download
+from nltk.tokenize import sent_tokenize
+import urllib3
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 router = APIRouter()
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 load_dotenv()  # charge le fichier .env dans os.environ
@@ -75,12 +82,47 @@ FAISS_INDEX_PATH = "./rag_state/index.faiss"
 CHUNKS_PATH = "./rag_state/chunks.pkl"
 
 # === UTILS ===
-def split_text(text, chunk_size=200, overlap=30):
-    words = text.split()
-    return [
-        " ".join(words[i:i + chunk_size])
-        for i in range(0, len(words), chunk_size - overlap)
-    ]
+
+
+def ensure_punkt():
+    try:
+        find('tokenizers/punkt')
+        print("[NLTK] 'punkt' déjà installé.")
+    except LookupError:
+        print("[NLTK] 'punkt' non trouvé. Téléchargement en cours...")
+        download('punkt')
+
+
+def split_text(text, chunk_size=100, overlap=50):
+    ensure_punkt()
+
+    # Découper en phrases
+    sentences = sent_tokenize(text)
+
+    chunks = []
+    current_chunk = []
+    current_length = 0
+
+    for sentence in sentences:
+        sentence_words = sentence.split()
+        sentence_length = len(sentence_words)
+
+        if current_length + sentence_length > chunk_size:
+            chunks.append(" ".join(current_chunk))
+            # Gérer l'overlap
+            if overlap > 0:
+                current_chunk = current_chunk[-overlap:]
+            else:
+                current_chunk = []
+            current_length = len(current_chunk)
+
+        current_chunk.extend(sentence_words)
+        current_length += sentence_length
+
+    if current_chunk:
+        chunks.append(" ".join(current_chunk))
+
+    return chunks
 
 def extract_text_with_ocr(pdf_path):
     images = convert_from_path(pdf_path)
@@ -107,6 +149,12 @@ def load_rag_state():
     return False
 
 # === INITIALISATION RAG ===
+import traceback
+import os
+import numpy as np
+import faiss
+import fitz  # PyMuPDF
+
 def initialize_rag():
     global index, chunks_list
 
@@ -123,6 +171,9 @@ def initialize_rag():
     all_chunks = []
     all_embeddings = []
 
+    fichiers_ok = []
+    fichiers_ignore = []
+
     for filename in os.listdir(PDF_DIR):
         if not filename.lower().endswith(".pdf"):
             continue
@@ -135,6 +186,7 @@ def initialize_rag():
                 full_text = "\n".join([page.get_text() for page in pdf])
         except Exception as e:
             print(f"[WARN] Impossible de lire {filename} avec PyMuPDF : {e}")
+            fichiers_ignore.append((filename, "lecture PDF"))
             continue
 
         if not full_text.strip():
@@ -143,31 +195,41 @@ def initialize_rag():
                 full_text = extract_text_with_ocr(pdf_path)
             except Exception as e:
                 print(f"[WARN] OCR échoué pour {filename} : {e}")
+                fichiers_ignore.append((filename, "OCR"))
                 continue
 
         if not full_text.strip():
             print(f"[WARN] Texte vide même après OCR pour {filename}, ignoré.")
+            fichiers_ignore.append((filename, "texte vide après OCR"))
             continue
 
         chunks = split_text(full_text)
-        BATCH_SIZE = 100  # Ajuste selon la taille acceptable pour l’API
+        print(f"[INFO] {len(chunks)} chunks générés pour {filename}")
+
+        BATCH_SIZE = 10
         embeddings = []
 
-        for i in range(0, len(chunks), BATCH_SIZE):
-            batch = chunks[i:i + BATCH_SIZE]
         try:
-            batch_embeddings = get_embeddings(batch)
-            embeddings.extend(batch_embeddings)
+            for i in range(0, len(chunks), BATCH_SIZE):
+                batch = chunks[i:i + BATCH_SIZE]
+               
+                batch_embeddings = get_embeddings(batch)
+                embeddings.extend(batch_embeddings)
         except Exception as e:
-            print(f"[WARN] Échec d'embedding pour le batch {i}–{i+BATCH_SIZE}: {e}")
+            print(f"[ERROR] Échec d'embedding pour {filename} : {e}")
+            print(traceback.format_exc())
+            fichiers_ignore.append((filename, f"embedding - {str(e)}"))
+            continue
 
-
-        if embeddings is None or len(embeddings) == 0:
+        if not embeddings:
+            print(f"[DEBUG] Exemple chunk : {batch[0][:200]}...")
             print(f"[WARN] Aucun embedding généré pour {filename}, ignoré.")
+            fichiers_ignore.append((filename, "embeddings vides"))
             continue
 
         all_chunks.extend(chunks)
         all_embeddings.extend(embeddings)
+        fichiers_ok.append(filename)
 
     if not all_embeddings:
         print("[!!] Aucun embedding généré pour les PDF du dossier.")
@@ -185,6 +247,17 @@ def initialize_rag():
     print(f"[INFO] Index FAISS construit avec {index.ntotal} vecteurs.")
     save_rag_state()
     print("[INFO] État RAG sauvegardé.")
+
+    print("\n[RESUME] Initialisation RAG terminée :")
+    print(f"  - Fichiers indexés avec succès : {len(fichiers_ok)}")
+    for f in fichiers_ok:
+        print(f"    * {f}")
+    if fichiers_ignore:
+        print(f"  - Fichiers ignorés ({len(fichiers_ignore)}):")
+        for f, raison in fichiers_ignore:
+            print(f"    * {f} (raison : {raison})")
+    else:
+        print("  - Aucun fichier ignoré.")
 
 
 
@@ -241,12 +314,12 @@ def ask_rag(
    
     question_vector = get_embeddings([question])[0]
     print(f"[DEBUG] Type : {type(question_vector)}, longueur : {len(question_vector)}")
-    _, I = index.search(np.array([question_vector]), k=5)
+    _, I = index.search(np.array([question_vector]), k=20)
     top_chunks = [chunks_list[i] for i in I[0] if i < len(chunks_list)]
     context = "\n\n".join(top_chunks)
 
     prompt = f"""
-    Tu es un assistant juridique. Réponds à la question suivante en t'appuyant sur les extraits ci-dessous, ne prends pas en compte ce qui n'a aucun rapport avec la question. 
+    Tu es un assistant juridique. Réponds à la question suivante en t'appuyant sur les extraits ci-dessous, ne prends pas en compte les extraits qui n'ont aucun rapport avec la question. 
 
     Formate ta réponse de façon claire et lisible, en utilisant des **titres**, des **puces** ou des **listes numérotées** si nécessaire. Utilise le **Markdown** pour la mise en forme.
 
@@ -338,7 +411,7 @@ async def ask_with_pdf(
 
         print("[INFO] Génération du vecteur de question...")
         question_vector = get_embeddings([question])[0]
-        _, I = tmp_index.search(np.array([question_vector]), k=5)
+        _, I = tmp_index.search(np.array([question_vector]), k=20)
         top_chunks = [tmp_chunks[i] for i in I[0] if i < len(tmp_chunks)]
         context = "\n\n".join(top_chunks)
 
