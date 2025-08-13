@@ -33,6 +33,31 @@ from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.database import Base
 from sqlalchemy import Boolean, func
+from typing import Any
+from llama_index.vector_stores.postgres import PGVectorStore
+from pathlib import Path
+from llama_index.core import SimpleDirectoryReader
+from llama_index.readers.file import UnstructuredReader
+from llama_index.core.schema import Document
+
+from llama_index.core import QueryBundle
+from llama_index.core.retrievers import BaseRetriever
+from llama_index.core.schema import NodeWithScore
+from llama_index.core.vector_stores import VectorStoreQuery
+
+from typing import Optional, List, Mapping, Any
+from llama_index.core import SimpleDirectoryReader, SummaryIndex
+from llama_index.core.callbacks import CallbackManager
+from llama_index.core.llms import (
+    CustomLLM,
+    CompletionResponse,
+    CompletionResponseGen,
+    LLMMetadata,
+)
+from llama_index.core.llms.callbacks import llm_completion_callback
+from llama_index.core import Settings
+from llama_index.core.query_engine import RetrieverQueryEngine
+
 
 class User(Base):
     __tablename__ = "users"
@@ -65,3 +90,33 @@ class Message(Base):
 
     conversation = relationship("Conversation", back_populates="messages")
 
+class OurLLM(CustomLLM):
+    context_window: int = 3900
+    num_output: int = 256
+    model_name: str = "custom"
+    dummy_response: str = "My response"
+
+    @property
+    def metadata(self) -> LLMMetadata:
+        """Get LLM metadata."""
+        return LLMMetadata(
+            context_window=self.context_window,
+            num_output=self.num_output,
+            model_name=self.model_name,
+        )
+
+class VectorDBRetriever(BaseRetriever):
+    
+
+    def __init__(
+        self,
+        vector_store: PGVectorStore,
+        embed_model: Any,
+        query_mode: str = "default",
+        similarity_top_k: int = 2,
+    ) -> None:
+        self._vector_store = vector_store
+        self._embed_model = embed_model
+        self._query_mode = query_mode
+        self._similarity_top_k = similarity_top_k
+        super().__init__()

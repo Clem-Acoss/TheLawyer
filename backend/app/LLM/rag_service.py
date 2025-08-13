@@ -12,11 +12,26 @@ import shutil
 
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Depends
 from sqlalchemy.orm import Session
-from app.LLM.embedding_service import get_embeddings
 from app import crud, models, schemas
 from app.auth.deps import get_db, get_current_user
 from app.schemas import QuestionRequest, MessageOut, MessageCreate
 from app.config import DB_NAME, DB_HOST, DB_USER, DB_PASSWORD, DB_PORT
+from app.LLM.llm_service import OurLLM
+
+from app.LLM.retriever_service import MyVectorDBRetriever
+from unstructured.staging.base import elements_from_base64_gzipped_json
+from llama_index.vector_stores.postgres import PGVectorStore
+from llama_index.core import Settings
+from llama_index.core.query_engine import RetrieverQueryEngine
+from app.config import (
+    DATABASE_URL,
+    DB_NAME,
+    DB_HOST,
+    DB_PASSWORD,
+    DB_PORT,
+    DB_USER,
+    
+)
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 PGVECTOR_TABLE = os.getenv("PGVECTOR_TABLE", "documents")
@@ -30,7 +45,7 @@ router = APIRouter()
 # --- Connexion PG ---
 def get_pg_connection():
     return psycopg2.connect(
-        dbname=DB_NAME,
+        db_name=DB_NAME,
         user=DB_USER,
         password=DB_PASSWORD,
         host=DB_HOST,
@@ -38,6 +53,7 @@ def get_pg_connection():
     )
 
 # --- Extraction texte du PDF ---
+'''
 def extract_text_from_pdf(pdf_path: str) -> str:
     text = ""
     pdf = fitz.open(pdf_path)
@@ -50,7 +66,7 @@ def extract_text_from_pdf(pdf_path: str) -> str:
         else:
             text += page_text
     return text.strip()
-
+'''
 # --- Découpage en chunks ---
 def chunk_text(text: str, chunk_size: int = 500, overlap: int = 50):
     chunks = []
@@ -61,7 +77,7 @@ def chunk_text(text: str, chunk_size: int = 500, overlap: int = 50):
         chunks.append(chunk)
         start += chunk_size - overlap
     return chunks
-
+'''
 # --- Ajout PDF dans PGVector ---
 def add_pdf_to_rag(pdf_path: str) -> str:
     try:
@@ -90,28 +106,90 @@ def add_pdf_to_rag(pdf_path: str) -> str:
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Erreur ajout PDF : {str(e)}")
+'''
 
-# --- Recherche limitée à un session_id ---
-def search_chunks_for_session(question: str, session_id: str, k: int = 20):
+def get_response_from_RAG(user_query:str, data_source="cra_assist_vector_store_boss", chunks_number=10):
     try:
-        vector = get_embeddings([question])[0]
-        vector_str = "[" + ",".join(str(x) for x in vector) + "]"
-
-        conn = get_pg_connection()
-        cur = conn.cursor()
-        cur.execute(f"""
-            SELECT text
-            FROM {PGVECTOR_TABLE}
-            ORDER BY embedding <=> %s
-            LIMIT %s
-        """, (vector_str, k))
-        results = cur.fetchall()
-        conn.close()
-
-        return [row[0] for row in results]
+        
+        # define the vector store
+        vector_store = PGVectorStore.from_params(
+            database=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD,
+            host=DB_HOST,
+            port=DB_PORT,
+            table_name= data_source, #"cra_assist_vector_store_urssaf_fr","cra_assist_vector_store_LAMY","cra_assist_vector_store_LEGIFRANCE"
+            embed_dim=896
+        )
+        
+        print("[RAG] Vector store initialisé OK")
     except Exception as e:
+        import traceback
+        print("[RAG][ERROR] Impossible d'initialiser le vector store :")
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Erreur recherche PGVector : {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Erreur initialisation vector store : {str(e)}")
+    
+    print("[RAG] Initialisation LLM...")
+    # define the LLM
+    try:
+        Settings.llm = OurLLM()
+    # ton code LLM
+    except Exception as e:
+        import traceback
+        print("[RAG][ERROR] Erreur LLM :", e)
+        print(traceback.format_exc())
+        raise
+    print("[RAG] LLM initialisé OK")
+    print("[RAG] Initialisation du retriever...")
+    try:
+        # define the retriever
+        retriever = MyVectorDBRetriever(
+            vector_store,
+            embed_model="local",
+            query_mode="default",
+            similarity_top_k=chunks_number
+        )
+        print("[RAG] Retriever OK")
+        llm_instance = Settings.llm 
+        print("[RAG] Création du query engine...")
+        query_engine = RetrieverQueryEngine.from_args(retriever, llm=llm_instance)
+        print("[RAG] Query engine OK")
+    except Exception as e:
+        import traceback
+        print("[RAG][ERROR] Impossible d'initialiser le retriever ou le query engine :")
+        print(e)
+        print(traceback.format_exc())
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Erreur initialisation retriever/query engine : {str(e)}"
+        )
+
+    print(f"[RAG] Envoi de la requête : {user_query}")
+    # get response from the RAG and parse it 
+    try:
+        response = query_engine.query(user_query)
+        print("[RAG] Réponse brute reçue")
+    except Exception as e:
+        import traceback
+        print("[RAG][ERROR] Erreur lors de la requête au query engine :")
+        print(e)
+        print(traceback.format_exc())
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erreur lors de la requête RAG : {str(e)}"
+        )
+
+    chunks_metadata = []
+    
+
+    for node_with_score in response.source_nodes:
+        node_dict = node_with_score.node.to_dict()
+        node_dict["score"] = node_with_score.score
+        node_dict["metadata"]["orig_elements"] = [ {orig_element.category:orig_element.text} for orig_element in elements_from_base64_gzipped_json(node_dict["metadata"]["orig_elements"]) ]
+        chunks_metadata.append(node_dict)
+    api_response = { "answer": response.response, "chunks_metadata":chunks_metadata}
+    print("[RAG] Réponse formatée et prête")
+    return api_response
 
 # === ROUTE ASK (avec session_id déjà existant) ===
 @router.post("/ask", response_model=schemas.MessageOut)
@@ -122,31 +200,11 @@ def ask_rag(
 ):
     question = request.question
     conversation_id = request.conversation_id
-    # Si tu as besoin de session_id, il faut la récupérer d'ailleurs, sinon supprime ces lignes
-    # session_id = ...
 
     print(f"[DEBUG] Question : {question}")
     print(f"[DEBUG] Conversation_id : {conversation_id}")
 
-    # Supposons que search_chunks_for_session n'ait pas besoin de session_id mais conversation_id
-    top_chunks = search_chunks_for_session(question, conversation_id, k=20)
-    if not top_chunks:
-        raise HTTPException(status_code=500, detail="Pas de données dans la session RAG.")
-
-    context = "\n\n".join(top_chunks)
-
-    prompt = f"""
-    Tu es un assistant juridique. Réponds à la question suivante en t'appuyant sur les extraits ci-dessous, ne prends pas en compte les extraits hors contexte.
-
-    --- Contexte ---
-    {context}
-
-    --- Question ---
-    {question}
-
-    --- Réponse ---
-    """
-
+    # Sauvegarde du message utilisateur
     user_message_data = schemas.MessageCreate(
         conversation_id=conversation_id,
         sender="user",
@@ -155,22 +213,18 @@ def ask_rag(
     )
     crud.create_message(db=db, message_data=user_message_data)
 
-    # Appel LLM API
+    # 🔹 Appel de ton nouveau RAG
     try:
-        headers = {
-            "Authorization": f"Bearer {LLM_API_KEY}",
-            "Content-Type": "application/json",
-        }
-        data = {
-            "model": LLM_MODEL,
-            "messages": [{"role": "user", "content": prompt}],
-        }
-        res = requests.post(LLM_API_URL, headers=headers, json=data, verify=False, timeout=60)
-        res.raise_for_status()
-        response = res.json()["choices"][0]["message"]["content"]
-    except requests.RequestException as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        rag_result = get_response_from_RAG(
+            user_query=question,
+            data_source="cra_assist_vector_store_boss",
+            chunks_number=10
+        )
+        response = rag_result["answer"]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur RAG : {str(e)}")
 
+    # Sauvegarde du message IA
     ai_message_data = schemas.MessageCreate(
         conversation_id=conversation_id,
         sender="assistant",
@@ -184,12 +238,16 @@ def ask_rag(
 
 
 # === ROUTE ASK-WITH-PDF (upload + index temporaire) ===
+'''
+
 @router.post("/ask-with-pdf", response_model=schemas.MessageOut)
 def ask_rag(
     request: QuestionRequest,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
+    question = request.question
+    conversation_id = request.conversation_id
     print("[INFO] Requête reçue sur /ask-with-pdf")
 
     if file.content_type != "application/pdf":
@@ -275,3 +333,4 @@ def ask_rag(
                 print("[INFO] Fichier temporaire supprimé.")
         except Exception as cleanup_err:
             print(f"[WARN] Impossible de supprimer fichier temporaire : {cleanup_err}")
+'''

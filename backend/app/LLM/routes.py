@@ -25,7 +25,7 @@ Remarques :
 - L’indexation utilise FAISS et SentenceTransformer, gérés dans `rag_service.py`
 - Le modèle utilisé est défini dans l’appel à l’API Ollama (`model: llama3.2`)
 """
-
+'''
 from fastapi import UploadFile, File, HTTPException
 from app.LLM.rag_service import add_pdf_to_rag
 from app.LLM import rag_service
@@ -114,3 +114,4 @@ async def upload_pdf(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=f"Erreur lors de l'indexation PDF: {str(e)}")
 
     return {"detail": "PDF ajouté et indexé avec succès"}
+'''

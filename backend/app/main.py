@@ -57,7 +57,7 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(chat_router)
 app.include_router(rag_service.router, prefix="/rag", tags=["RAG"])
-app.include_router(llm_routes.router)
+#app.include_router(llm_routes.router)
 
 # === FRONTEND (React) ===
 
