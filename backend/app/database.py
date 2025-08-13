@@ -26,12 +26,30 @@ Remarques :
 
 
 
-
 from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base
-from sqlalchemy.orm import sessionmaker
-from app.config import DATABASE_URL
+from sqlalchemy.orm import declarative_base, sessionmaker
+import psycopg2
+from app.config import (
+    DATABASE_URL,
+    DB_NAME,
+    DB_HOST,
+    DB_PASSWORD,
+    DB_PORT,
+    DB_USER,
+)
 
+# --- Base The Lawyer (SQLAlchemy) ---
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
+
+# --- Connexion psycopg2 vers CRA ---
+def get_cra_connection():
+    db_config = {
+        "dbname": DB_NAME,
+        "user": DB_USER,
+        "password": DB_PASSWORD,
+        "host": DB_HOST,
+        "port": DB_PORT,
+    }
+    return psycopg2.connect(**db_config)

@@ -36,12 +36,7 @@ from app.database import Base, engine
 # Création des tables
 Base.metadata.create_all(bind=engine)
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    rag_service.initialize_rag()
-    yield
-
-app = FastAPI(lifespan=lifespan)
+app = FastAPI()
 
 # CORS
 app.add_middleware(
