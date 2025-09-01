@@ -5,8 +5,13 @@ WORKDIR /frontend
 # Copier le reste du code frontend (après installation des dépendances pour cache optimisé)
 COPY droit-ai-interface/ ./
 
-RUN npm config set registry http://nexus.urssaf.recouv/repository/npm-proxy/
+RUN npm config set registry http://nexus.urssaf.recouv/repository/npm-proxy/ \
+    && npm config set fetch-retries 10 \
+    && npm config set fetch-retry-mintimeout 60000 \
+    && npm config set fetch-retry-maxtimeout 900000 \
+    && npm config set fetch-timeout 900000
 # Installer les dépendances Node avec logs détaillés
+RUN npm cache clean --force
 RUN npm install --force --verbose
 
 

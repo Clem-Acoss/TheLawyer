@@ -108,9 +108,8 @@ def add_pdf_to_rag(pdf_path: str) -> str:
         raise HTTPException(status_code=500, detail=f"Erreur ajout PDF : {str(e)}")
 '''
 
-def get_response_from_RAG(user_query:str, data_source="cra_assist_vector_store_boss", chunks_number=10):
+def get_response_from_RAG(user_query: str, data_source="cra_assist_vector_store_boss", chunks_number=10):
     try:
-        
         # define the vector store
         vector_store = PGVectorStore.from_params(
             database=DB_NAME,
@@ -118,31 +117,28 @@ def get_response_from_RAG(user_query:str, data_source="cra_assist_vector_store_b
             password=DB_PASSWORD,
             host=DB_HOST,
             port=DB_PORT,
-            table_name= data_source, #"cra_assist_vector_store_urssaf_fr","cra_assist_vector_store_LAMY","cra_assist_vector_store_LEGIFRANCE"
+            table_name=data_source,
             embed_dim=896
         )
-        
         print("[RAG] Vector store initialisé OK")
     except Exception as e:
         import traceback
         print("[RAG][ERROR] Impossible d'initialiser le vector store :")
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Erreur initialisation vector store : {str(e)}")
-    
+
     print("[RAG] Initialisation LLM...")
-    # define the LLM
     try:
         Settings.llm = OurLLM()
-    # ton code LLM
     except Exception as e:
         import traceback
         print("[RAG][ERROR] Erreur LLM :", e)
         print(traceback.format_exc())
         raise
     print("[RAG] LLM initialisé OK")
+
     print("[RAG] Initialisation du retriever...")
     try:
-        # define the retriever
         retriever = MyVectorDBRetriever(
             vector_store,
             embed_model="local",
@@ -150,7 +146,8 @@ def get_response_from_RAG(user_query:str, data_source="cra_assist_vector_store_b
             similarity_top_k=chunks_number
         )
         print("[RAG] Retriever OK")
-        llm_instance = Settings.llm 
+
+        llm_instance = Settings.llm
         print("[RAG] Création du query engine...")
         query_engine = RetrieverQueryEngine.from_args(retriever, llm=llm_instance)
         print("[RAG] Query engine OK")
@@ -160,15 +157,17 @@ def get_response_from_RAG(user_query:str, data_source="cra_assist_vector_store_b
         print(e)
         print(traceback.format_exc())
         raise HTTPException(
-            status_code=500, 
+            status_code=500,
             detail=f"Erreur initialisation retriever/query engine : {str(e)}"
         )
 
     print(f"[RAG] Envoi de la requête : {user_query}")
-    # get response from the RAG and parse it 
     try:
         response = query_engine.query(user_query)
         print("[RAG] Réponse brute reçue")
+        print(">>> Source nodes trouvés :", len(response.source_nodes))
+        for s in response.source_nodes:
+            print(">>> Chunk:", s.node.get_content()[:200], "... score:", s.score)
     except Exception as e:
         import traceback
         print("[RAG][ERROR] Erreur lors de la requête au query engine :")
@@ -179,18 +178,33 @@ def get_response_from_RAG(user_query:str, data_source="cra_assist_vector_store_b
             detail=f"Erreur lors de la requête RAG : {str(e)}"
         )
 
+    # --- Normalisation des chunks pour le frontend ---
     chunks_metadata = []
-    
-
     for node_with_score in response.source_nodes:
         node_dict = node_with_score.node.to_dict()
         node_dict["score"] = node_with_score.score
-        node_dict["metadata"]["orig_elements"] = [ {orig_element.category:orig_element.text} for orig_element in elements_from_base64_gzipped_json(node_dict["metadata"]["orig_elements"]) ]
-        chunks_metadata.append(node_dict)
-    api_response = { "answer": response.response, "chunks_metadata":chunks_metadata}
-    print("[RAG] Réponse formatée et prête")
-    return api_response
+        node_dict["metadata"]["orig_elements"] = [
+            {orig_element.category: orig_element.text}
+            for orig_element in elements_from_base64_gzipped_json(node_dict["metadata"]["orig_elements"])
+        ]
 
+        # Mapping pour frontend : node_text
+        chunks_metadata.append({
+            "node_text": node_dict.get("text") or node_dict.get("content") or "",
+            "score": node_dict["score"],
+            "metadata": node_dict.get("metadata", {})
+        })
+
+    api_response = {
+        "answer": response.response,
+        "chunks_metadata": chunks_metadata
+    }
+
+    print("[RAG] Réponse formatée et prête")
+    print(">>> Type de la réponse :", type(response))
+    print(">>> Contenu brut de response :", response)
+    print(">>> dir(response):", dir(response))
+    return api_response
 # === ROUTE ASK (avec session_id déjà existant) ===
 @router.post("/ask", response_model=schemas.MessageOut)
 def ask_rag(
@@ -200,9 +214,19 @@ def ask_rag(
 ):
     question = request.question
     conversation_id = request.conversation_id
+    data_source = request.data_source 
 
-    print(f"[DEBUG] Question : {question}")
-    print(f"[DEBUG] Conversation_id : {conversation_id}")
+    # Mapping front -> nom réel de la table
+    SOURCE_TABLE_MAP = {
+        "urssaf": "cra_assist_vector_store_urssaf_fr",
+        "lamy": "cra_assist_vector_store_LAMY",
+        "legifrance": "cra_assist_vector_store_LEGIFRANCE",
+        "boss": "cra_assist_vector_store_boss",
+    }
+
+    data_source_table = SOURCE_TABLE_MAP.get(data_source.lower())
+    if not data_source_table:
+        raise HTTPException(status_code=400, detail=f"Data source inconnue: {data_source}")
 
     # Sauvegarde du message utilisateur
     user_message_data = schemas.MessageCreate(
@@ -213,27 +237,41 @@ def ask_rag(
     )
     crud.create_message(db=db, message_data=user_message_data)
 
-    # 🔹 Appel de ton nouveau RAG
+    # 🔹 Appel RAG
     try:
         rag_result = get_response_from_RAG(
             user_query=question,
-            data_source="cra_assist_vector_store_boss",
+            data_source=data_source_table,
             chunks_number=10
         )
-        response = rag_result["answer"]
+
+        # Récupération du texte de la réponse et des chunks directement depuis le dict
+        response_text = rag_result.get("answer", "")
+        chunks_metadata = rag_result.get("chunks_metadata", [])
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur RAG : {str(e)}")
 
-    # Sauvegarde du message IA
+    # Sauvegarde message IA avec chunks
     ai_message_data = schemas.MessageCreate(
         conversation_id=conversation_id,
         sender="assistant",
-        content=response,
+        content=response_text,
         is_ai=True,
+        chunks=chunks_metadata
     )
+    print("[DEBUG urgennnnnnnnnnt] chunks_metadata:", chunks_metadata)
     ai_message = crud.create_message(db=db, message_data=ai_message_data)
 
-    return ai_message
+    return {
+        "id": ai_message.id,
+        "sender": ai_message.sender,
+        "content": ai_message.content,
+        "created_at": ai_message.created_at.isoformat(),
+        "is_ai": ai_message.is_ai,
+        "chunks": ai_message.chunks or []
+    }
+
 
 
 

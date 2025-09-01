@@ -3,15 +3,15 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { ChatMessage } from "@/components/ChatMessage";
 import { Skeleton } from "@/components/ui/skeleton";
 
-type Message = {
-  text: string;
+
+export type ChatMessage = {
+  message: string | { content: string; chunks?: Array<{ node_text?: string }> };
   isAi: boolean;
 };
-
 type MainChatAreaProps = {
-  messages: Message[];
+  messages: ChatMessage[];
   isLoading: boolean;
-  messagesEndRef: RefObject<HTMLDivElement>;
+  messagesEndRef: React.RefObject<HTMLDivElement>;
 };
 
 export const MainChatArea: React.FC<MainChatAreaProps> = ({
@@ -23,16 +23,21 @@ export const MainChatArea: React.FC<MainChatAreaProps> = ({
     <ScrollArea className="flex-1 p-4">
       <div className="space-y-4">
         {messages.map((msg, i) => (
-          <ChatMessage key={i} message={msg.text} isAi={msg.isAi} />
+          <ChatMessage
+            key={i}
+            message={msg.message}  // on passe directement le message au composant
+            isAi={msg.isAi}
+          />
         ))}
+
+        {/* Loader */}
         {isLoading && (
           <ChatMessage
-            message={
-              <Skeleton className="h-6 w-20 rounded-md bg-muted animate-pulse" />
-            }
+            message="Chargement..."
             isAi={true}
           />
         )}
+
         <div ref={messagesEndRef} />
       </div>
     </ScrollArea>

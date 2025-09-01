@@ -97,7 +97,8 @@ def create_message(db: Session, message_data: MessageCreate) -> Message:
     message = Message(
         conversation_id=message_data.conversation_id,
         sender=message_data.sender,
-        content=message_data.content
+        content=message_data.content,
+        chunks=message_data.chunks
     )
     db.add(message)
     db.commit()

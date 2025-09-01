@@ -40,40 +40,59 @@ import { apiFetch } from "@/lib/api";
 import { useNavigate } from "react-router-dom";
 import { ModalWrapper } from "@/components/ModalWrapper";
 import { InputArea } from "@/components/InputArea";
-import {FloatingButtons } from "@/components/floatingButtons";
+import { FloatingButtons } from "@/components/floatingButtons";
 import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/Sidebar";
+
 type Conversation = {
   id: number;
   title: string;
   created_at: string;
 };
+
 type MessageFromAPI = {
   content: string;
   sender: string;
 };
+
 type Message = {
   id: number;
   sender: string;
   content: string;
   created_at: string;
+  chunks?: Array<{ node_text?: string }>;
 };
+
 type ApiResponse = {
   content?: string;
   response?: string;
-}
+  chunks_metadata?: Array<{
+    node_text?: string;
+    score?: number;
+    metadata?: any;
+  }>;
+};
+
 const Index = () => {
   const { logout } = useUser();
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
   const [showUpload, setShowUpload] = useState(false);
   const [messages, setMessages] = useState<
-    Array<{ text: string; isAi: boolean }>
+    Array<{
+      message:
+        | string
+        | { content: string; chunks?: Array<{ node_text?: string }> };
+      isAi: boolean;
+    }>
   >([
     {
-      text: "Bonjour, je suis votre assistant juridique. Comment puis-je vous aider aujourd'hui ?",
+      message:
+        "Bonjour, je suis votre assistant juridique. Comment puis-je vous aider aujourd'hui ?",
       isAi: true,
     },
   ]);
+
   const [input, setInput] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -85,7 +104,11 @@ const Index = () => {
   const [mode, setMode] = useState<"rag" | "llm">("rag");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showErrorModal, setShowErrorModal] = useState(false);
-  const [showFloatingButtons, setShowFloatingButtons] = React.useState(false);
+  const [showFloatingButtons, setShowFloatingButtons] = useState(false);
+  const [dataSource, setDataSource] = useState<
+    "urssaf" | "lamy" | "legifrance" | "boss"
+  >("boss");
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
@@ -103,9 +126,11 @@ const Index = () => {
     title: c.title,
     date: new Date(c.created_at).toLocaleDateString("fr-FR"),
   }));
+
   const toggleFloatingButtons = () => {
-    setShowFloatingButtons(prev => !prev);
+    setShowFloatingButtons((prev) => !prev);
   };
+
   const handleSelectConversation = (title: string) => {
     const conv = conversations.find((c) => c.title === title);
     if (conv) {
@@ -115,6 +140,7 @@ const Index = () => {
       fetchMessages(conv.id);
     }
   };
+
   const showError = (message: string) => {
     setErrorMessage(message);
     setShowErrorModal(true);
@@ -125,7 +151,7 @@ const Index = () => {
       .then((all) =>
         setMessages(
           all.map((m) => ({
-            text: m.content,
+            message: { content: m.content, chunks: m.chunks || [] },
             isAi: m.sender !== "user",
           }))
         )
@@ -149,7 +175,7 @@ const Index = () => {
     setIsLoading(true);
 
     if (userMessage) {
-      setMessages((prev) => [...prev, { text: userMessage, isAi: false }]);
+      setMessages((prev) => [...prev, { message: userMessage, isAi: false }]);
     }
 
     try {
@@ -161,7 +187,6 @@ const Index = () => {
       }
 
       if (files.length > 0) {
-        // Cas avec PDF à envoyer (uniquement en mode RAG)
         if (mode !== "rag") {
           showError("L'envoi de fichiers PDF n'est disponible qu'en mode RAG.");
           setIsLoading(false);
@@ -179,7 +204,6 @@ const Index = () => {
           body: formData,
           headers: {
             Authorization: `Bearer ${token}`,
-            
           },
         });
 
@@ -189,13 +213,16 @@ const Index = () => {
 
         setMessages((prev) => [
           ...prev,
-          { text: data.content || data.response || "Réponse reçue.", isAi: true },
+          {
+            message: {
+              content: data.content || data.response || "Réponse reçue.",
+              chunks: data.chunks_metadata || [],
+            },
+            isAi: true,
+          },
         ]);
-        setFiles([]);
       } else {
-        // Cas sans fichier
         if (mode === "rag") {
-          // RAG sans fichier : on utilise ton endpoint RAG classique (ex: /rag/ask)
           const response = await fetch("/rag/ask", {
             method: "POST",
             headers: {
@@ -205,6 +232,7 @@ const Index = () => {
             body: JSON.stringify({
               conversation_id: selectedConvId,
               question: userMessage,
+              data_source: dataSource,
             }),
           });
 
@@ -214,8 +242,17 @@ const Index = () => {
 
           setMessages((prev) => [
             ...prev,
-            { text: data.content || data.response || "Réponse reçue.", isAi: true },
+            {
+              message: {
+                content: data.content || data.response || "Réponse reçue.",
+                chunks: data.chunks_metadata || [],
+              },
+              isAi: true,
+            },
           ]);
+          if (selectedConvId) {
+            fetchMessages(selectedConvId); // <-- ici
+          }
         }
       }
     } catch (e) {
@@ -226,9 +263,8 @@ const Index = () => {
     }
   };
 
-
   const startNewConversation = () => {
-  setNewConvDialogOpen(true);
+    setNewConvDialogOpen(true);
   };
 
   const handleNewConversation = async (title: string) => {
@@ -246,7 +282,6 @@ const Index = () => {
     }
   };
 
-  
   const handleDeleteConversation = (title: string) => {
     const conv = conversations.find((c) => c.title === title);
     if (!conv) return;
@@ -260,7 +295,8 @@ const Index = () => {
           setSelectedTitle(undefined);
           setMessages([
             {
-              text: "Bonjour, je suis votre assistant juridique. Comment puis-je vous aider aujourd'hui ?",
+              message:
+                "Bonjour, je suis votre assistant juridique. Comment puis-je vous aider aujourd'hui ?",
               isAi: true,
             },
           ]);
@@ -276,19 +312,17 @@ const Index = () => {
     setShowConfirm(true);
   };
 
-
-
   const handleSettings = () => {
     console.log("Ouverture des paramètres");
-    
   };
 
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    logout(); 
-    navigate("/login"); 
+    logout();
+    navigate("/login");
   };
+
   const [showConfirm, setShowConfirm] = useState(false);
   const [confirmCallback, setConfirmCallback] = useState<() => void>(() => {});
   const [newConvDialogOpen, setNewConvDialogOpen] = useState(false);
@@ -302,7 +336,7 @@ const Index = () => {
         onDelete={handleDeleteConversation}
         onSettings={handleSettings}
         onLogout={handleLogout}
-        onCraClick={() => {}} // à implémenter ou ignorer si pas utilisé
+        onCraClick={() => {}}
         onNewConversation={startNewConversation}
       />
 
@@ -329,27 +363,32 @@ const Index = () => {
           onSend={handleSend}
           isLoading={isLoading}
           showUpload={showUpload}
-          toggleUpload={() => setShowUpload(prev => !prev)}
+          toggleUpload={() => setShowUpload((prev) => !prev)}
           files={files}
           onFileSelect={setFiles}
           onRemoveFile={(name) =>
-            setFiles(prev => prev.filter(file => file.name !== name))
+            setFiles((prev) => prev.filter((file) => file.name !== name))
           }
           toggleFloatingButtons={toggleFloatingButtons}
         />
-        {showFloatingButtons && <FloatingButtons />}
+        {showFloatingButtons && (
+          <FloatingButtons
+            currentSource={dataSource}
+            onSelectSource={setDataSource}
+          />
+        )}
       </main>
-        <ModalWrapper
-          newConvDialogOpen={newConvDialogOpen}
-          setNewConvDialogOpen={setNewConvDialogOpen}
-          onCreateConversation={handleNewConversation}
-          showConfirm={showConfirm}
-          setShowConfirm={setShowConfirm}
-          onConfirmDelete={() => confirmCallback?.()}
-          showErrorModal={showErrorModal}
-          setShowErrorModal={setShowErrorModal}
-          errorMessage={errorMessage}
-        />
+      <ModalWrapper
+        newConvDialogOpen={newConvDialogOpen}
+        setNewConvDialogOpen={setNewConvDialogOpen}
+        onCreateConversation={handleNewConversation}
+        showConfirm={showConfirm}
+        setShowConfirm={setShowConfirm}
+        onConfirmDelete={() => confirmCallback?.()}
+        showErrorModal={showErrorModal}
+        setShowErrorModal={setShowErrorModal}
+        errorMessage={errorMessage}
+      />
     </div>
   );
 };

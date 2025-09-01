@@ -28,7 +28,7 @@ Remarques :
 
 
 
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Text
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Text, JSON
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.database import Base
@@ -87,7 +87,7 @@ class Message(Base):
     content = Column(String, nullable=False)
     created_at = Column(DateTime(timezone=False), server_default=func.now())
     is_ai = Column(Boolean, default=False, nullable=False)
-
+    chunks = Column(JSON, nullable=True)
     conversation = relationship("Conversation", back_populates="messages")
 
 class OurLLM(CustomLLM):

@@ -59,7 +59,8 @@ class MessageCreate(BaseModel):
     conversation_id: int
     sender: str
     content: str
-    is_ai: bool = False  
+    is_ai: bool = False
+    chunks: Optional[List[dict]] = None  
 
 class MessageOut(BaseModel):
     id: int
@@ -67,6 +68,7 @@ class MessageOut(BaseModel):
     content: str
     created_at: datetime
     is_ai: bool
+    chunks: Optional[List[dict]] = []
 
     model_config = ConfigDict(from_attributes=True)
         
@@ -78,6 +80,7 @@ class MessageRequest(BaseModel):
 class QuestionRequest(BaseModel):
     question: str
     conversation_id: Optional[int] = None
+    data_source: str
 
 
 class PasswordResetRequest(BaseModel):

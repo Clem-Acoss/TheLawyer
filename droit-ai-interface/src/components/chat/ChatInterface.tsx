@@ -4,7 +4,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { ChatMessage } from "@/components/ChatMessage";
 import { FileUpload } from "../FileUpload";
-import { FloatingButtons } from "../FloatingButtons";
+import { FloatingButtons } from "@/components/ui/floatingButtons";
 
 import { Loader2, Send } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
@@ -35,7 +35,7 @@ export const ChatInterface = ({
       <ScrollArea className="flex-1 px-4 py-4">
         <div className="flex flex-col gap-4 max-w-4xl mx-auto">
           {messages.map((message, idx) => (
-            <ChatMessage key={idx} message={message} />
+            <ChatMessage key={idx} message={message} isAi={message.isAi} />
           ))}
         </div>
       </ScrollArea>
@@ -53,7 +53,14 @@ export const ChatInterface = ({
           }}
         />
         <div className="flex justify-between">
-          <FileUpload onFileSelect={onFileUpload} />
+          <FileUpload
+            files={[]} // pas de fichiers pour l'instant
+            onRemoveFile={(name: string) => {}} // fonction vide temporaire
+            onFileSelect={(files: File[]) => {
+            console.log("Fichiers sélectionnés :", files);
+            }}
+          />
+
           <Button onClick={onSend} disabled={isSending}>
             {isSending ? (
               <>
